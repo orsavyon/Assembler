@@ -1,10 +1,10 @@
-; file ps.as
+
 
 .define sz = 2
-MAIN:     mov r3, LIST[sz] ; this is a comment test
+MAIN:     mov r3, LIST[sz] 
 LOOP:     jmp L1
           mcr m_mcr
-                cmp r3, #sz ;this is a comment test
+                cmp r3, #sz 
           bne   END
           endmcr
           prn #-5

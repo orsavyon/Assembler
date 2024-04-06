@@ -1,68 +1,102 @@
-#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include "utils.h"
+#include "data.h"
 
-/*
- * Removes all white spaces from the source_line and saves the result in dest_line.
- *
- * @param source_line The input string with white spaces.
- * @param dest_line The output string without white spaces.
- */
-void remove_white_spaces(char *source_line, char *dest_line)
+/* make a duplicate of s */
+char *strdup(char *s)
 {
-    while (*source_line != '\0')
+    char *p;
+    p = (char *)malloc(strlen(s) + 1); /* +1 for '\0' */
+    if (p != NULL)
     {
-        if (*source_line != ' ' && *source_line != '\t' && *source_line != '\n')
+        strcpy(p, s);
+    }
+    return p;
+}
+
+/* fileCopy: copy file ifp to file ofp */
+void fileCopy(FILE *ifp, FILE *ofp)
+{
+    int c;
+    while ((c = getc(ifp)) != EOF)
+        putc(c, ofp);
+}
+
+/* printFile: print file content */
+
+void printFile(FILE *fp)
+{
+    int c;
+    rewind(fp);
+    while ((c = getc(fp)) != EOF)
+    {
+        putc(c, stdout);
+    }
+}
+
+/* skipAndCopy:*/
+
+void skipAndCopy(FILE *source, FILE *dest)
+{
+    int c, inComment = 0;
+
+    while ((c = fgetc(source)) != EOF)
+    {
+        if (inComment)
         {
-            *dest_line++ = *source_line;
+            if (c == '\n')
+            {
+                inComment = 0;
+                fputc(c, dest);
+            }
         }
-        source_line++;
+        else
+        {
+            if (c == ';')
+            {
+                inComment = 1;
+            }
+            else
+            {
+                fputc(c, dest);
+            }
+        }
     }
-    *dest_line = '\0'; /* Null-terminate the destination string */
 }
 
-/*
- * Removes the prefix white spaces from the source_line and saves the result in dest_line.
- *
- * @param source_line The input string with prefix white spaces.
- * @param dest_line The output string without prefix white spaces.
- */
-void remove_prefix_white_spaces(char *source_line, char *dest_line)
-{
-    /* Skip the leading white spaces */
-    while (*source_line == ' ' || *source_line == '\t' || *source_line == '\n')
-    {
-        source_line++;
-    }
+/* trimLine: trim white characters from both ends of line */
 
-    /* Copy the rest of the string */
-    while (*source_line != '\0')
+void trimLine(char *line)
+{
+    int i, j;
+    for (i = 0; line[i] == ' ' || line[i] == '\t'; i++)
+        ;
+    for (j = 0; line[i] != '\0'; i++)
     {
-        *dest_line++ = *source_line++;
+        line[j++] = line[i];
     }
-    *dest_line = '\0'; /* Null-terminate the destination string */
+    for (i = j - 1; i >= 0 && (line[i] == ' ' || line[i] == '\t'); i--)
+    {
+        line[i] = '\0';
+    }
 }
 
-/*
- * Removes the macro indentation from the sourceline and saves the result in dest_line.
- * The macro indentation is assumed to start at index 4 of the sourceline.
- *
- * @param sourceline The input string with macro indentation.
- * @param dest_line The output string without macro indentation.
- * @note The assumption is that macro content is written in indentation of 4 chars.
- */
-void remove_macro_indentation(char *sourceline, char *dest_line)
-{
-    int i;
-    /* Skip the first 4 characters (assuming they are the macro indentation) */
-    for (i = 0; i < 4 && *sourceline != '\0'; i++)
-    {
-        sourceline++;
-    }
+/* skipWhiteLines: skip white lines in file */
 
-    /* Copy the rest of the string */
-    while (*sourceline != '\0')
-    {
-        *dest_line++ = *sourceline++;
-    }
-    *dest_line = '\0'; /* Null-terminate the destination string */
+void skipWhiteLines(FILE *fp)
+{
+    int c;
+    while ((c = fgetc(fp)) == '\n' || c == '\t' || c == ' ')
+        ;
+    ungetc(c, fp);
+}
+
+/* handleError: print error message and line */
+
+void handleError(const char *errorMessage, int lineNumber, char *line)
+{
+    errorFlag = 1;
+    fprintf(stderr, "Error in line %d: %s\n\t%s\n", lineNumber, errorMessage, line);
 }

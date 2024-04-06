@@ -1,27 +1,22 @@
-# Define the compiler
-CC=gcc
-# Define the flags for the compiler
-CFLAGS=-ansi -Wall -pedantic
+all: assembler
 
-# Default target
-all: main
+assembler: assembler.o macro_parser.o first_pass.o utils.o data.o
+	gcc -ansi -Wall -pedantic assembler.o macro_parser.o first_pass.o utils.o data.o -o assembler
 
-# Main program executable
-main: main.c utils.o preprocessor.o macro_table.o
-	$(CC) $(CFLAGS) main.c utils.o preprocessor.o macro_table.o -o main
+assembler.o: assembler.c assembler.h utils.h
+	gcc -ansi -Wall -pedantic -c assembler.c -o assembler.o
 
-# Object file for utils.c
+macro_parser.o: macro_parser.c macro_parser.h utils.h
+	gcc -ansi -Wall -pedantic -c macro_parser.c -o macro_parser.o
+
+first_pass.o: first_pass.c first_pass.h utils.h
+	gcc -ansi -Wall -pedantic -c first_pass.c -o first_pass.o
+
 utils.o: utils.c utils.h
-	$(CC) $(CFLAGS) -c utils.c -o utils.o
+	gcc -ansi -Wall -pedantic -c utils.c -o utils.o
 
-# Object file for preprocessor.c
-preprocessor.o: preprocessor.c preprocessor.h macro_table.o
-	$(CC) $(CFLAGS) -c preprocessor.c -o preprocessor.o
+data.o: data.c data.h
+	gcc -ansi -Wall -pedantic -c data.c -o data.o
 
-# Object file for macro_table.c
-macro_table.o: macro_table.c macro_table.h
-	$(CC) $(CFLAGS) -c macro_table.c -o macro_table.o
-
-# Clean target to remove all compiled objects and the executable
 clean:
-	rm -f *.o main
+	rm -f *.o assembler
