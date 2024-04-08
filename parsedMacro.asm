@@ -10,7 +10,7 @@ cmp r3, #sz
 L1:       inc K
           bne LOOP
 END:      hlt
-.define len = 4
+.define len    = 4
 STR:      .string “abcdef”
 LIST: .data 6, -9, len
 K: .data 22

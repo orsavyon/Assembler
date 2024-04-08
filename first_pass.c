@@ -58,11 +58,11 @@ void firstPass(FILE *fp)
                     {
                         if (lookupSymbol(symbolName) == NULL)
                         {
-                            handleError("TEST --> Symbol not found", lineNum, line);
+                            addSymbol(symbolName, data, DC);
                         }
                         else
                         {
-                            addSymbol(symbolName, data, DC);
+                            handleError("TEST --> Symbol already exists", lineNum, line);
                         }
                     }
                     processDirective(remainingLine);
@@ -122,6 +122,7 @@ void firstPass(FILE *fp)
         */
     }
     printSymbolTable();
+    printMemory();
 
     /* Update the value of each symbol characterized as data in the symbol table by adding IC + 100 */
     /*updateSymbolValues(IC + 100); */
@@ -213,6 +214,7 @@ void processDefinition(char *line)
         int value;
 
         sscanf(line, ".define %[^=]=%d", constantName, &value);
+        trimLine(constantName);
         addSymbol(constantName, mdefine, value);
         printf("TEST --> Valid constant definition\n");
     }
@@ -236,8 +238,8 @@ int isValidConstantDefinition(char *line)
     }
 
     sscanf(line, ".define %[^=]=%d", constantName, &value);
-
-    printf("TEST --> Constant name: %s\n", constantName);
+    trimLine(constantName);
+    printf("TEST --> Constant name: '%s'\n", constantName);
     printf("TEST --> Value: %d\n", value);
 
     /* Trim leading and trailing white spaces from the constant name and value */
@@ -277,10 +279,13 @@ void processDirective(char *line)
     {
     case DATA_DIRECTIVE:
         printf("TEST --> Data directive\n");
+        processDataDirective(line);
 
         break;
     case STRING_DIRECTIVE:
         printf("TEST --> String directive\n");
+        processDataDirective(line);
+
         break;
     case ENTRY_DIRECTIVE:
         printf("TEST --> Entry directive\n");
@@ -299,6 +304,61 @@ void processDirective(char *line)
     case INVALID_DIRECTIVE:
         handleError("TEST --> Invalid directive", lineNum, line);
         break;
+    }
+}
+
+void processDataDirective(char *line)
+{
+    char *token;
+    printf("TEST --> Processing data directive\n");
+    if (strncmp(line, ".data", 5) == 0)
+    {
+        token = strtok(line + 6, ",");
+        while (token != NULL)
+        {
+            Symbol *symbol;
+            printf("TEST --> Token: %s\n", token);
+            trimLine(token);
+
+            symbol = lookupSymbol(token);
+            if (symbol)
+            {
+                printf("TEST --> Symbol Found: %s\n", symbol->symbolName);
+            }
+            else
+            {
+                printf("TEST --> Symbol Not Found: %s\n", token);
+            }
+
+            if (symbol && symbol->symbolType == mdefine)
+            {
+                printf("TEST --> Symbol: %s\n", symbol->symbolName);
+                memory[DC++] = symbol->value;
+            }
+            else if (isdigit(token[0]) || token[0] == '-' || token[0] == '+')
+            {
+                memory[DC++] = atoi(token);
+            }
+            else
+            {
+                printf("Error: Undefined symbol or invalid number in .data directive: %s\n", token);
+            }
+            token = strtok(NULL, ",");
+        }
+    }
+    else if (strncmp(line, ".string", 7) == 0)
+    {
+        char *start = strchr(line, '"') + 1;
+        char *end = strrchr(line, '"');
+        if (start && end && start < end)
+        {
+            char *c = start;
+            for (; c < end; c++)
+            {
+                memory[DC++] = (unsigned char)*c;
+            }
+            memory[DC++] = '\0';
+        }
     }
 }
 

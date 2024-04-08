@@ -17,21 +17,22 @@
 #define MAX_SYMBOLS 100
 
 /* Global variables for assembler state */
-extern int IC;           /* Instruction Counter */
-extern int DC;           /* Data Counter */
-extern int L;            /* Line number in the source code */
-extern int symbolCount;  /* Number of symbols */
-extern int dataCount;    /* Number of data entries */
-extern int labelCount;   /* Number of labels */
-extern int commandCount; /* Number of commands */
-extern int labelFlag;    /* Flag for label detection */
-extern int dataFlag;     /* Flag for data detection */
-extern int commandFlag;  /* Flag for command detection */
-extern int symbolFlag;   /* Flag for symbol detection */
-extern int entryFlag;    /* Flag for entry detection */
-extern int externFlag;   /* Flag for extern detection */
-extern int lineNum;      /* Current line number being processed */
-extern int errorFlag;    /* Flag for error detection */
+extern int IC;               /* Instruction Counter */
+extern int DC;               /* Data Counter */
+extern int L;                /* Line number in the source code */
+extern int symbolCount;      /* Number of symbols */
+extern int dataCount;        /* Number of data entries */
+extern int labelCount;       /* Number of labels */
+extern int commandCount;     /* Number of commands */
+extern int labelFlag;        /* Flag for label detection */
+extern int dataFlag;         /* Flag for data detection */
+extern int commandFlag;      /* Flag for command detection */
+extern int symbolFlag;       /* Flag for symbol detection */
+extern int entryFlag;        /* Flag for entry detection */
+extern int externFlag;       /* Flag for extern detection */
+extern int lineNum;          /* Current line number being processed */
+extern int errorFlag;        /* Flag for error detection */
+extern int memory[MAX_DATA]; /* Memory array for the assembler */
 
 /* Array of saved words used by the assembler */
 extern char *savedWords[];
@@ -39,9 +40,11 @@ extern char *savedWords[];
 /* Structure defining a command in the assembler */
 typedef struct Command
 {
-    const char *cmdName; /* Name of the command */
-    int opCode;          /* Opcode of the command */
-    int numOfOps;        /* Number of operands the command takes */
+    const char *cmdName;   /* Name of the command */
+    int opCode;            /* Opcode of the command */
+    int numOfOps;          /* Number of operands the command takes */
+    int srcLegalAddrs[4];  /* Legal addressing methods for source operand */
+    int destLegalAddrs[4]; /* Legal addressing methods for destination operand */
 } Command;
 
 extern Command commandTable[CMD_NUM]; /* Table of assembler commands */
@@ -150,4 +153,6 @@ void initTranslationTable();
  * @param word The word to be added at the specified address.
  */
 void insertTranslationToTable(int decimalAddress, Word *word);
+
+void printMemory();
 #endif /* DATA_H */

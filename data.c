@@ -58,6 +58,7 @@ int entryFlag = 0;    /* Flag for entry directive processing */
 int externFlag = 0;   /* Flag for extern directive processing */
 int lineNum = 0;      /* Current line number */
 int errorFlag = 0;    /* Flag for error detection */
+int memory[MAX_DATA]; /* Memory array for the assembler */
 
 /**
  * Initializes the command table with predefined assembly commands.
@@ -160,13 +161,19 @@ void initSymbolTable()
 struct Symbol *lookupSymbol(const char *name)
 {
     struct Symbol *sym;
-    for (sym = symbolTable[hashSymbolName(name)]; sym != NULL; sym = sym->next)
+    printf("Looking up symbol: '%s'\n", name);
+    sym = symbolTable[hashSymbolName(name)];
+    while (sym != NULL)
     {
+        printf("Checking symbol: '%s'\n", sym->symbolName);
         if (strcmp(name, sym->symbolName) == 0)
         {
+            printf("Symbol found: '%s'\n", sym->symbolName);
             return sym;
         }
+        sym = sym->next;
     }
+    printf("Symbol '%s' not found.\n", name);
     return NULL;
 }
 
@@ -213,11 +220,21 @@ void printSymbolTable()
             printf("Bucket %d:\n", i);
             while (sym != NULL)
             {
-                printf("  Name: %s\n", sym->symbolName);
+                printf("  Name: '%s'\n", sym->symbolName);
                 printf("  Type: %d\n", sym->symbolType);
                 printf("  Value: %u\n", sym->value);
                 sym = sym->next;
             }
         }
+    }
+}
+
+void printMemory()
+{
+    int i;
+    printf("Memory Content:\n");
+    for (i = 0; i < DC; i++)
+    {
+        printf("Memory[%d]: %d\n", i, memory[i]);
     }
 }

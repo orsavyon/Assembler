@@ -1,3 +1,7 @@
 {
-  "cmake.sourceDirectory": "/mnt/c/Users/razy0/Desktop/Final Project/Assembler"
+  "cmake.sourceDirectory": "/mnt/c/Users/razy0/Desktop/Final Project/Assembler",
+  "files.associations": {
+    "*.ejs": "html",
+    "typeinfo": "c"
+  }
 }

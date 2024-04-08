@@ -44,4 +44,6 @@ void processDirective(char *line);
 
 void processExternDirective(char *line);
 
+void processDataDirective(char *line);
+
 #endif

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "utils.h"
 #include "data.h"
 
@@ -92,22 +93,37 @@ void skipAndCopy(FILE *source, FILE *dest)
  *
  * @param line The string to be trimmed.
  */
+/**
+ * @brief Trims whitespace characters from both ends of a string.
+ *
+ * @param line The string to be trimmed.
+ *
+ * @brief Trims whitespace characters from both ends of a string.
+ *
+ * @param line The string to be trimmed.
+ */
 void trimLine(char *line)
 {
-    int i, j;
-    /* Trim leading spaces */
-    for (i = 0; line[i] == ' ' || line[i] == '\t'; i++)
-        ;
-    /* Copy trimmed string */
-    for (j = 0; line[i] != '\0'; i++)
+    char *start = line;
+    char *end;
+
+    while (isspace((unsigned char)*start))
     {
-        line[j++] = line[i];
+        start++;
     }
-    /* Trim trailing spaces */
-    for (i = j - 1; i >= 0 && (line[i] == ' ' || line[i] == '\t'); i--)
+
+    if (start != line)
     {
-        line[i] = '\0';
+        memmove(line, start, strlen(start) + 1);
     }
+
+    end = line + strlen(line) - 1;
+    while (end >= line && (isspace((unsigned char)*end) || *end == '\n'))
+    {
+        end--;
+    }
+
+    *(end + 1) = '\0';
 }
 
 /**
