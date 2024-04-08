@@ -5,32 +5,67 @@
 #include "data.h"
 #include "utils.h"
 
-/* saved words in program */
-char *savedWords[] = {"r1", "r2", "r3", "r4", "r5", "r6", "r7"
-                                                          "mov",
-                      "cmp", "add", "sub", "not", "clr", "lea", "inc", "dec", "jmp", "bne", "red", "prn", "jsr", "rts", "hlt", "data", "string", "entry", "extern", "define", "mcr", "endmcr"};
+/* Array of reserved words used in the program */
+char *savedWords[] = {
+    "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+    "mov", "cmp", "add", "sub", "not", "clr", "lea", "inc", "dec",
+    "jmp", "bne", "red", "prn", "jsr", "rts", "hlt",
+    "data", "string", "entry", "extern", "define", "mcr", "endmcr"};
 
-/* names of registers in CPU */
+/* Array of register names in the CPU */
 char *registers[] = {"r1", "r2", "r3", "r4", "r5", "r6", "r7"};
+/* Table containing all commands supported by the assembler */
 Command commandTable[16];
 
-int IC = 100;
-int DC = 0;
-int symbolCount = 0;
-int dataCount = 0;
-int labelCount = 0;
-int commandCount = 0;
-int labelFlag = 0;
-int dataFlag = 0;
-int commandFlag = 0;
-int symbolFlag = 0;
-int entryFlag = 0;
-int externFlag = 0;
-int lineNum = 0;
-int errorFlag = 0;
+/* Table for holding translations during assembly process */
+Translation *translationTable[MAX_DATA];
 
+/* Initialize the translation table */
+void initTranslationTable()
+{
+    int i;
+    for (i = 0; i < MAX_DATA; i++)
+    {
+        translationTable[i] = NULL;
+    }
+}
+
+/* Insert a translation into the translation table */
+void addTranslationLine(int decimalAddress, Word *word)
+{
+    translationTable[decimalAddress] = (Translation *)malloc(sizeof(Translation));
+    if (translationTable[decimalAddress] == NULL)
+    {
+        fprintf(stderr, "Memory allocation error\n");
+        return;
+    }
+    translationTable[decimalAddress]->word = word;
+}
+
+/* Global variables used in the assembly process */
+int IC = 100;         /* Instruction counter */
+int DC = 0;           /* Data counter */
+int L = 0;            /* Line number (not used here) */
+int symbolCount = 0;  /* Number of symbols */
+int dataCount = 0;    /* Number of data entries */
+int labelCount = 0;   /* Number of labels */
+int commandCount = 0; /* Number of commands */
+int labelFlag = 0;    /* Flag for label processing */
+int dataFlag = 0;     /* Flag for data processing */
+int commandFlag = 0;  /* Flag for command processing */
+int symbolFlag = 0;   /* Flag for symbol processing */
+int entryFlag = 0;    /* Flag for entry directive processing */
+int externFlag = 0;   /* Flag for extern directive processing */
+int lineNum = 0;      /* Current line number */
+int errorFlag = 0;    /* Flag for error detection */
+
+/**
+ * Initializes the command table with predefined assembly commands.
+ */
 void initData()
 {
+    /* Initializing command table with command names, opcodes, and number of operands */
+
     commandTable[0].cmdName = "mov";
     commandTable[0].opCode = 0;
     commandTable[0].numOfOps = 2;
@@ -96,13 +131,11 @@ void initData()
     commandTable[15].numOfOps = 0;
 }
 
+/* Table containing all symbols found by the assembler */
+
 Symbol *symbolTable[MAX_SYMBOLS];
 
-void insertSymbolToTable(const char *symbolName, SymbolType symbol, unsigned int value)
-{
-    printf("Inserting symbol %s to table\n", symbolName);
-}
-
+/* Generate a hash value for a symbol name */
 unsigned int hashSymbolName(const char *name)
 {
     unsigned int hashVal = 0;
@@ -113,6 +146,7 @@ unsigned int hashSymbolName(const char *name)
     return hashVal % MAX_SYMBOLS;
 }
 
+/* Initialize the symbol table */
 void initSymbolTable()
 {
     int i;
@@ -122,6 +156,7 @@ void initSymbolTable()
     }
 }
 
+/* Look up a symbol in the symbol table */
 struct Symbol *lookupSymbol(const char *name)
 {
     struct Symbol *sym;
@@ -134,6 +169,8 @@ struct Symbol *lookupSymbol(const char *name)
     }
     return NULL;
 }
+
+/* Add a symbol to the symbol table */
 
 void addSymbol(const char *name, SymbolType type, unsigned int value)
 {
@@ -162,6 +199,7 @@ void addSymbol(const char *name, SymbolType type, unsigned int value)
     }
 }
 
+/* Print the contents of the symbol table */
 void printSymbolTable()
 {
     int i;

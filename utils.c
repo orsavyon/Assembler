@@ -4,11 +4,18 @@
 #include "utils.h"
 #include "data.h"
 
-/* make a duplicate of s */
+/**
+ * @brief Creates a duplicate of the given string.
+ *
+ * Allocates memory for the new string and copies the content from the source string.
+ *
+ * @param s The string to duplicate.
+ * @return A pointer to the newly allocated string, or NULL if allocation fails.
+ */
 char *strdup(char *s)
 {
     char *p;
-    p = (char *)malloc(strlen(s) + 1); /* +1 for '\0' */
+    p = (char *)malloc(strlen(s) + 1); /* +1 for the null terminator */
     if (p != NULL)
     {
         strcpy(p, s);
@@ -16,7 +23,12 @@ char *strdup(char *s)
     return p;
 }
 
-/* fileCopy: copy file ifp to file ofp */
+/**
+ * @brief Copies the content from one file to another.
+ *
+ * @param ifp Pointer to the input file.
+ * @param ofp Pointer to the output file.
+ */
 void fileCopy(FILE *ifp, FILE *ofp)
 {
     int c;
@@ -24,8 +36,11 @@ void fileCopy(FILE *ifp, FILE *ofp)
         putc(c, ofp);
 }
 
-/* printFile: print file content */
-
+/**
+ * @brief Prints the content of a file to standard output.
+ *
+ * @param fp Pointer to the file to be printed.
+ */
 void printFile(FILE *fp)
 {
     int c;
@@ -36,8 +51,14 @@ void printFile(FILE *fp)
     }
 }
 
-/* skipAndCopy:*/
-
+/**
+ * @brief Skips comments and copies the remaining content from the source file to the destination file.
+ *
+ * Comments are lines starting with ';' and are not copied to the destination.
+ *
+ * @param source Pointer to the source file.
+ * @param dest Pointer to the destination file.
+ */
 void skipAndCopy(FILE *source, FILE *dest)
 {
     int c, inComment = 0;
@@ -66,35 +87,49 @@ void skipAndCopy(FILE *source, FILE *dest)
     }
 }
 
-/* trimLine: trim white characters from both ends of line */
-
+/**
+ * @brief Trims whitespace characters from both ends of a string.
+ *
+ * @param line The string to be trimmed.
+ */
 void trimLine(char *line)
 {
     int i, j;
+    /* Trim leading spaces */
     for (i = 0; line[i] == ' ' || line[i] == '\t'; i++)
         ;
+    /* Copy trimmed string */
     for (j = 0; line[i] != '\0'; i++)
     {
         line[j++] = line[i];
     }
+    /* Trim trailing spaces */
     for (i = j - 1; i >= 0 && (line[i] == ' ' || line[i] == '\t'); i--)
     {
         line[i] = '\0';
     }
 }
 
-/* skipWhiteLines: skip white lines in file */
-
+/**
+ * @brief Skips white lines (lines with only space, tab, or newline characters) in the file.
+ *
+ * @param fp Pointer to the file.
+ */
 void skipWhiteLines(FILE *fp)
 {
     int c;
     while ((c = fgetc(fp)) == '\n' || c == '\t' || c == ' ')
         ;
-    ungetc(c, fp);
+    ungetc(c, fp); /*Put back the first non-white character*/
 }
 
-/* handleError: print error message and line */
-
+/**
+ * @brief Handles and prints an error message along with the line number and the problematic line.
+ *
+ * @param errorMessage The error message to print.
+ * @param lineNumber The line number where the error occurred.
+ * @param line The actual line from the source file where the error occurred.
+ */
 void handleError(const char *errorMessage, int lineNumber, char *line)
 {
     errorFlag = 1;

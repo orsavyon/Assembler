@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Constant definitions for assembler limits */
 #define MAX_LABEL_LENGTH 31
 #define MAX_SYMBOLS 100
 #define MAX_DATA 1000
@@ -15,88 +16,138 @@
 #define MAX_OPERANDS 2
 #define MAX_SYMBOLS 100
 
-/* variable helpers */
-extern int IC;
-extern int DC;
-extern int symbolCount;
-extern int dataCount;
-extern int labelCount;
-extern int commandCount;
-extern int labelFlag;
-extern int dataFlag;
-extern int commandFlag;
-extern int symbolFlag;
-extern int entryFlag;
-extern int externFlag;
-extern int lineNum;
-extern int errorFlag;
+/* Global variables for assembler state */
+extern int IC;           /* Instruction Counter */
+extern int DC;           /* Data Counter */
+extern int L;            /* Line number in the source code */
+extern int symbolCount;  /* Number of symbols */
+extern int dataCount;    /* Number of data entries */
+extern int labelCount;   /* Number of labels */
+extern int commandCount; /* Number of commands */
+extern int labelFlag;    /* Flag for label detection */
+extern int dataFlag;     /* Flag for data detection */
+extern int commandFlag;  /* Flag for command detection */
+extern int symbolFlag;   /* Flag for symbol detection */
+extern int entryFlag;    /* Flag for entry detection */
+extern int externFlag;   /* Flag for extern detection */
+extern int lineNum;      /* Current line number being processed */
+extern int errorFlag;    /* Flag for error detection */
 
-/* saved words */
+/* Array of saved words used by the assembler */
 extern char *savedWords[];
 
-/* command definitions */
+/* Structure defining a command in the assembler */
 typedef struct Command
 {
-    const char *cmdName;
-    int opCode;
-    int numOfOps;
-
+    const char *cmdName; /* Name of the command */
+    int opCode;          /* Opcode of the command */
+    int numOfOps;        /* Number of operands the command takes */
 } Command;
 
-extern Command commandTable[CMD_NUM];
+extern Command commandTable[CMD_NUM]; /* Table of assembler commands */
 
-/* word definition */
-typedef struct Word
+/* Union defining a word in the assembler's memory */
+typedef union Word
 {
-    unsigned int ARE : 2;
-    unsigned int desO : 2;
-    unsigned int srcO : 2;
-    unsigned int opcode : 4;
-    unsigned int na : 4;
+    struct
+    {
+        unsigned int na : 4;     /* Not used */
+        unsigned int opcode : 4; /* Opcode part of the word */
+        unsigned int srcOp : 2;  /* Source operand addressing mode */
+        unsigned int desOp : 2;  /* Destination operand addressing mode */
+        unsigned int ARE : 2;    /* A,R,E fields for assembler relocation */
+    } bits;
+    unsigned int value; /* The full word value */
 } Word;
 
-/* symbol definition */
+/* Enumeration for different types of symbols */
 typedef enum
 {
-    DATA,
-    CODE,
-    EXTERN,
-    ENTRY,
-    MDEFINE
+    data,     /* Data symbol */
+    code,     /* Code symbol */
+    external, /* External symbol */
+    entry,    /* Entry symbol */
+    mdefine   /* Macro definition */
 } SymbolType;
+
+/* Structure defining a symbol in the symbol table */
 typedef struct Symbol
 {
-    const char *symbolName;
-    SymbolType symbolType;
-    unsigned int value;
-    struct Symbol *next;
+    const char *symbolName; /* Name of the symbol */
+    SymbolType symbolType;  /* Type of the symbol */
+    unsigned int value;     /* Value of the symbol */
+    struct Symbol *next;    /* Pointer to the next symbol in the table */
 } Symbol;
 
-enum symlDef
-{
-    mdefine,
-    code
-};
+extern Symbol *symbolTable[MAX_SYMBOLS]; /* The symbol table */
 
-extern Symbol *symbolTable[MAX_SYMBOLS];
-
-/* directives */
+/* Enumeration for different types of directives */
 typedef enum
 {
     DATA_DIRECTIVE,
     STRING_DIRECTIVE,
     ENTRY_DIRECTIVE,
-    EXTERN_DIRECTIVE
+    EXTERN_DIRECTIVE,
+    INVALID_DIRECTIVE
 } DirectiveType;
 
-/* functions */
+/* Structure defining a translation unit in the translation table */
+typedef struct Translation
+{
+    int decimalAddress; /* Decimal address of the word */
+    Word *word;         /* Pointer to the word being translated */
+} Translation;
 
+/* Function prototypes for operations on the assembler's data structures */
 void initData();
 
-void insertSymbolToTable(const char *symbolName, SymbolType symbolType, unsigned int value);
+/* Initialize data for assembly processing */
+void insertSymbolToTable(const char *symbolName, SymbolType symbolType, unsigned int value); /* Insert a symbol into the symbol table */
+/**
+ * Generates a hash value for a symbol name.
+ *
+ * @param name The symbol name to hash.
+ * @return The hash value for the symbol name.
+ */
 unsigned int hashSymbolName(const char *name);
+
+/**
+ * Initializes the symbol table by setting all entries to NULL.
+ */
 void initSymbolTable();
+
+/**
+ * Looks up a symbol in the symbol table.
+ *
+ * @param name The name of the symbol to find.
+ * @return A pointer to the found symbol or NULL if not found.
+ */
 struct Symbol *lookupSymbol(const char *name);
+
+/**
+ * Adds a symbol to the symbol table.
+ *
+ * @param name The name of the symbol to add.
+ * @param type The type of the symbol.
+ * @param value The value of the symbol.
+ */
 void addSymbol(const char *name, SymbolType type, unsigned int value);
+
+/**
+ * Prints the contents of the symbol table.
+ */
 void printSymbolTable();
-#endif
+
+/**
+ * Initializes the translation table with NULL values.
+ */
+void initTranslationTable();
+
+/**
+ * Adds a line to the translation table at the specified decimal address.
+ *
+ * @param decimalAddress The address in the table where the word will be added.
+ * @param word The word to be added at the specified address.
+ */
+void insertTranslationToTable(int decimalAddress, Word *word);
+#endif /* DATA_H */

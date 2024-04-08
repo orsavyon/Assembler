@@ -21,13 +21,9 @@ void firstPass(FILE *fp)
     while (fgets(line, MAX_LINE_LENGTH, fp) != NULL)
     {
         lineNum++;
-        printf("Line %d: %s\n", lineNum, line);
+        trimLine(line);
+        printf("TEST --> Line %d: %s\n", lineNum, line);
 
-        if (isSymbol(line))
-        {
-            printf("Has symbol\n");
-            symbolFlag = 1;
-        }
         switch (getLineType(line))
         {
         case LINE_BLANK:
@@ -36,17 +32,78 @@ void firstPass(FILE *fp)
             break;
 
         case LINE_DEFINITION:
-            printf("Definition\n");
+            printf("TEST --> Definition\n");
             processDefinition(line);
             break;
 
+        case LINE_LABEL:
+        {
+            char symbolName[MAX_LINE_LENGTH];
+            char *symbolPos;
+            sscanf(line, "%[^:]", symbolName);
+            symbolPos = strstr(line, symbolName);
+            printf("TEST --> Label: %s\n", symbolName);
+            symbolFlag = 1;
+            if (symbolPos)
+            {
+                char *remainingLine = symbolPos + strlen(symbolName) + 1;
+
+                trimLine(remainingLine);
+                printf("TEST --> Remaining line: %s\n", remainingLine);
+
+                if (getLineType(remainingLine) == LINE_DIRECTIVE)
+                {
+                    printf("TEST --> Directive in label\n");
+                    if (getDirectiveType(remainingLine) == ENTRY_DIRECTIVE || getDirectiveType(remainingLine) == STRING_DIRECTIVE)
+                    {
+                        if (lookupSymbol(symbolName) == NULL)
+                        {
+                            handleError("TEST --> Symbol not found", lineNum, line);
+                        }
+                        else
+                        {
+                            addSymbol(symbolName, data, DC);
+                        }
+                    }
+                    processDirective(remainingLine);
+                }
+                else if (symbolFlag == 1)
+                {
+
+                    if (lookupSymbol(symbolName) == NULL)
+                    {
+                        addSymbol(symbolName, code, IC + 100);
+                    }
+                    else
+                    {
+                        handleError("TEST --> Symbol already defined", lineNum, line);
+                    }
+                }
+                else if (getLineType(remainingLine) == LINE_INSTRUCTION)
+                {
+                    printf("TEST --> Instruction in label\n");
+                    processInstruction(remainingLine);
+                }
+                else
+                {
+                    handleError("TEST --> Invalid line", lineNum, line);
+                }
+            }
+            break;
+        }
+
+        case LINE_DIRECTIVE:
+            printf("TEST --> Directive\n");
+            processDirective(line);
+            break;
+
         case LINE_INSTRUCTION:
-            printf("Instruction\n");
+            printf("TEST --> Instruction\n");
             processInstruction(line);
             break;
 
         case INVALID_LINE:
-            handleError("Invalid line", lineNum, line);
+            handleError("TEST --> Invalid line", lineNum, line);
             break;
         default:
             break;
@@ -90,12 +147,13 @@ char *getFirstWord(const char *line)
     }
 
     firstWord[i] = '\0';
+    printf("TEST --> First word: %s\n", firstWord);
     return firstWord;
 }
 
 LineType getLineType(char *line)
 {
-    if (line[0] == '\n' || line[0] == '\0' || line[0] == '\r' || line[0] == '\t' || line[0] == ' ')
+    if (line[0] == '\n' || line[0] == '\0' || isspace((unsigned char)line[0]))
     {
         return LINE_BLANK;
     }
@@ -106,6 +164,14 @@ LineType getLineType(char *line)
     if (isConstantDefinition(line))
     {
         return LINE_DEFINITION;
+    }
+    if (isSymbol(line))
+    {
+        return LINE_LABEL;
+    }
+    if (line[0] == '.')
+    {
+        return LINE_DIRECTIVE;
     }
     if (isInstruction(line))
     {
@@ -118,11 +184,12 @@ LineType getLineType(char *line)
 int isSymbol(char *line)
 {
     int i;
-    printf(" --> Checking if symbol\n");
+    printf("TEST --> Checking if symbol\n");
     for (i = 0; i < strlen(line); i++)
     {
-        if (line[i] == ':')
+        if (line[i] == ':' && line[i + 1] == ' ')
         {
+            printf("TEST --> Symbol found\n");
             return 1;
         }
     }
@@ -134,7 +201,7 @@ int isSymbol(char *line)
 
 int isConstantDefinition(char *line)
 {
-    printf(" --> Checking if constant definition\n");
+    printf("TEST --> Checking if constant definition\n");
     return strcmp(getFirstWord(line), ".define") == 0;
 }
 
@@ -146,12 +213,12 @@ void processDefinition(char *line)
         int value;
 
         sscanf(line, ".define %[^=]=%d", constantName, &value);
-        addSymbol(constantName, MDEFINE, value);
-        printf("Valid constant definition\n");
+        addSymbol(constantName, mdefine, value);
+        printf("TEST --> Valid constant definition\n");
     }
     else
     {
-        handleError("Invalid constant definition", lineNum, line);
+        handleError("TEST --> Invalid constant definition", lineNum, line);
     }
 }
 
@@ -160,18 +227,18 @@ int isValidConstantDefinition(char *line)
     char *constantName = (char *)malloc(MAX_LINE_LENGTH * sizeof(char));
     int value;
 
-    printf("Validating constant definition\n");
+    printf("TEST --> Validating constant definition\n");
     /* Parse the line to extract the constant name and value */
     if (strstr(line, "=") == NULL)
     {
-        handleError("Invalid constant definition: Missing equal sign", lineNum, line);
+        handleError("TEST --> Invalid constant definition: Missing equal sign", lineNum, line);
         return 0;
     }
 
     sscanf(line, ".define %[^=]=%d", constantName, &value);
 
-    printf("Constant name: %s\n", constantName);
-    printf("Value: %d\n", value);
+    printf("TEST --> Constant name: %s\n", constantName);
+    printf("TEST --> Value: %d\n", value);
 
     /* Trim leading and trailing white spaces from the constant name and value */
     /*trim(constantName);*/
@@ -180,7 +247,7 @@ int isValidConstantDefinition(char *line)
     /* Check if the constant name is already defined */
     if (lookupSymbol(constantName) != NULL)
     {
-        handleError("Symbol is already defined", lineNum, line);
+        handleError("TEST --> Symbol is already defined", lineNum, line);
         free(constantName);
         return 0;
     }
@@ -190,7 +257,7 @@ int isValidConstantDefinition(char *line)
     /* Check if the value is within the range of a 12-bit integer */
     if (value < -2048 || value > 2047)
     {
-        handleError("Value is out of range", lineNum, line);
+        handleError("TEST --> Value is out of range", lineNum, line);
         free(constantName);
         return 0;
     }
@@ -201,6 +268,66 @@ int isValidConstantDefinition(char *line)
 }
 
 /* ------ end LINE_DEFINITION code ------ */
+
+/* ------ start LINE_DIRECTIVE code ------ */
+
+void processDirective(char *line)
+{
+    switch (getDirectiveType(line))
+    {
+    case DATA_DIRECTIVE:
+        printf("TEST --> Data directive\n");
+
+        break;
+    case STRING_DIRECTIVE:
+        printf("TEST --> String directive\n");
+        break;
+    case ENTRY_DIRECTIVE:
+        printf("TEST --> Entry directive\n");
+        break;
+    case EXTERN_DIRECTIVE:
+        if (symbolFlag == 1)
+        {
+            break;
+        }
+        else
+        {
+            printf("TEST --> Extern directive\n");
+            processExternDirective(line);
+            break;
+        }
+    case INVALID_DIRECTIVE:
+        handleError("TEST --> Invalid directive", lineNum, line);
+        break;
+    }
+}
+
+DirectiveType getDirectiveType(char *line)
+{
+    char *directiveName;
+
+    directiveName = getFirstWord(line);
+
+    printf("TEST --> Checking directive type: %s\n", directiveName);
+    if (strcmp(directiveName, ".data") == 0)
+    {
+        return DATA_DIRECTIVE;
+    }
+    if (strcmp(directiveName, ".string") == 0)
+    {
+        return STRING_DIRECTIVE;
+    }
+    else
+    {
+        return INVALID_DIRECTIVE;
+    }
+}
+
+void processExternDirective(char *line)
+{
+    printf("TEST --> Processing extern directive\n");
+}
+/* ------ end LINE_DIRECTIVE code  */
 
 /* ------ start LINE_INSTRUCTION code ------ */
 /*
@@ -225,13 +352,17 @@ int isValidConstantDefinition(char *line)
 
 int isInstruction(char *line)
 {
+    char *instructionName;
     int i;
-    printf(" --> Checking if instruction\n");
+
+    instructionName = getFirstWord(line);
+
+    printf("TEST --> Checking if instruction\n");
     for (i = 0; i < CMD_NUM; i++)
     {
-        if (strcmp(getFirstWord(line), commandTable[i].cmdName) == 0)
+        if (strcmp(instructionName, commandTable[i].cmdName) == 0)
         {
-            printf("Instruction found: %s\n", commandTable[i].cmdName);
+            printf("TEST --> Instruction found: %s\n", commandTable[i].cmdName);
             return 1;
         }
     }
@@ -242,11 +373,11 @@ void processInstruction(char *line)
 {
     if (isValidInstruction(line))
     {
-        printf("Valid instruction\n");
+        printf("TEST --> Valid instruction\n");
     }
     else
     {
-        handleError("Invalid instruction", lineNum, line);
+        handleError("TEST --> Invalid instruction", lineNum, line);
     }
 }
 
@@ -256,22 +387,22 @@ int isValidInstruction(char *line)
     char *operands = (char *)malloc(MAX_LINE_LENGTH * sizeof(char));
     int i;
 
-    printf("Validating instruction\n");
+    printf("TEST --> Validating instruction\n");
 
     /* Parse the line to extract the instruction name and operands */
     sscanf(line, "%s %[^\n]", instructionName, operands);
 
-    printf("Instruction name: %s\n", instructionName);
-    printf("Operands: %s\n", operands);
+    printf("TEST --> Instruction name: %s\n", instructionName);
+    printf("TEST --> Operands: %s\n", operands);
 
     /* Check if the instruction name is valid */
     for (i = 0; i < CMD_NUM; i++)
     {
         if (strcmp(instructionName, commandTable[i].cmdName) == 0)
         {
-            return 1;
             free(instructionName);
             free(operands);
+            return 1;
         }
     }
     free(instructionName);

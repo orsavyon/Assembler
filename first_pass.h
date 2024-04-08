@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "utils.h"
+#include "data.h"
 
 typedef enum
 {
@@ -13,6 +14,7 @@ typedef enum
     LINE_DIRECTIVE,
     LINE_INSTRUCTION,
     LINE_DEFINITION,
+    LINE_LABEL,
     INVALID_LINE
 } LineType;
 
@@ -33,5 +35,13 @@ int isInstruction(char *line);
 int isValidInstruction(char *line);
 
 char *getFirstWord(const char *line);
+
+int isSymbol(char *line);
+
+DirectiveType getDirectiveType(char *line);
+
+void processDirective(char *line);
+
+void processExternDirective(char *line);
 
 #endif

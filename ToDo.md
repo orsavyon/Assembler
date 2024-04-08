@@ -43,7 +43,8 @@ The pre-processor parser checks line numbers and characters to identify errors, 
 ### TODO
 
 - First Pass Algorithm
-  Complete hasFlag logic and instruction vs, directive
+  Need to do step 9.
+  Need to do step 14.
 
 ## Second Pass
 
