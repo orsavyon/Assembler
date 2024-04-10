@@ -5,21 +5,13 @@
 #include "utils.h"
 #include "data.h"
 
-/**
- * @brief Creates a duplicate of the given string.
- *
- * Allocates memory for the new string and copies the content from the source string.
- *
- * @param s The string to duplicate.
- * @return A pointer to the newly allocated string, or NULL if allocation fails.
- */
-char *strdup(char *s)
+char *strdup(char *str)
 {
     char *p;
-    p = (char *)malloc(strlen(s) + 1); /* +1 for the null terminator */
+    p = (char *)malloc(strlen(str) + 1); /* +1 for the null terminator */
     if (p != NULL)
     {
-        strcpy(p, s);
+        strcpy(p, str);
     }
     return p;
 }
@@ -150,4 +142,30 @@ void handleError(const char *errorMessage, int lineNumber, char *line)
 {
     errorFlag = 1;
     fprintf(stderr, "Error in line %d: %s\n\t%s\n", lineNumber, errorMessage, line);
+}
+
+char *intToBinary(int value)
+{
+    char *binaryStr = malloc(17);
+    int i;
+    if (binaryStr == NULL)
+    {
+        fprintf(stderr, "Memory allocation failed\n");
+        return NULL;
+    }
+
+    binaryStr[16] = '\0';
+
+    for (i = 15; i >= 0; i--)
+    {
+        binaryStr[i] = (value & 1) + '0';
+        value >>= 1;
+    }
+
+    return binaryStr;
+}
+
+int intTo14Bit(int value)
+{
+    return value & 0x3FFF;
 }

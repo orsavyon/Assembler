@@ -3,6 +3,10 @@
 
 #include <stdio.h>
 
+char *intToBinary(int value);
+
+int intTo14Bit(int value);
+
 /**
  * @brief Duplicates a string by allocating memory for the new string and copying the content.
  *

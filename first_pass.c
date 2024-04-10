@@ -54,7 +54,7 @@ void firstPass(FILE *fp)
                 if (getLineType(remainingLine) == LINE_DIRECTIVE)
                 {
                     printf("TEST --> Directive in label\n");
-                    if (getDirectiveType(remainingLine) == ENTRY_DIRECTIVE || getDirectiveType(remainingLine) == STRING_DIRECTIVE)
+                    if (getDirectiveType(remainingLine) == DATA_DIRECTIVE || getDirectiveType(remainingLine) == STRING_DIRECTIVE)
                     {
                         if (lookupSymbol(symbolName) == NULL)
                         {
@@ -72,7 +72,7 @@ void firstPass(FILE *fp)
 
                     if (lookupSymbol(symbolName) == NULL)
                     {
-                        addSymbol(symbolName, code, IC + 100);
+                        addSymbol(symbolName, code, DC);
                     }
                     else
                     {
@@ -310,7 +310,8 @@ void processDirective(char *line)
 void processDataDirective(char *line)
 {
     char *token;
-    printf("TEST --> Processing data directive\n");
+    printf("TEST --> Processing data directive\n\t----Line: %s\n", line);
+
     if (strncmp(line, ".data", 5) == 0)
     {
         token = strtok(line + 6, ",");
@@ -348,16 +349,48 @@ void processDataDirective(char *line)
     }
     else if (strncmp(line, ".string", 7) == 0)
     {
-        char *start = strchr(line, '"') + 1;
-        char *end = strrchr(line, '"');
+
+        char *start = strchr(line, '\"');
+        char *end = NULL;
+        if (!start)
+        {
+            start = strstr(line, "“");
+            if (start)
+            {
+                start += 3;
+            }
+        }
+        else
+        {
+            start += 1;
+        }
+
+        if (start)
+        {
+            end = strchr(start, '\"');
+            if (!end)
+            {
+                end = strstr(start, "”");
+            }
+        }
+
+        printf("TEST --> Processing string directive\n");
+
         if (start && end && start < end)
         {
-            char *c = start;
-            for (; c < end; c++)
+            char *c;
+            printf("TEST --> String: %.*s\n", (int)(end - start), start);
+
+            for (c = start; c < end; c++)
             {
+                printf("TEST --> Char: %c\n", *c);
                 memory[DC++] = (unsigned char)*c;
             }
             memory[DC++] = '\0';
+        }
+        else
+        {
+            handleError("Invalid string directive", lineNum, line);
         }
     }
 }
@@ -371,6 +404,7 @@ DirectiveType getDirectiveType(char *line)
     printf("TEST --> Checking directive type: %s\n", directiveName);
     if (strcmp(directiveName, ".data") == 0)
     {
+        printf("TEST --> Data directive: %s found in line %d <--- Second TEST\n", directiveName, lineNum);
         return DATA_DIRECTIVE;
     }
     if (strcmp(directiveName, ".string") == 0)
