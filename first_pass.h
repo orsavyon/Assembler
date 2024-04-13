@@ -46,4 +46,10 @@ void processExternDirective(char *line);
 
 void processDataDirective(char *line);
 
+int decodeOperands(char *operands[]);
+
+Instruction *parseInstruction(char *line, Instruction *instruction);
+
+Addressing getAddressingMethod(char *operand);
+
 #endif

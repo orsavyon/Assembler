@@ -43,7 +43,7 @@ void addTranslationLine(int decimalAddress, Word *word)
 }
 
 /* Global variables used in the assembly process */
-int IC = 100;         /* Instruction counter */
+int IC = 0;           /* Instruction counter */
 int DC = 0;           /* Data counter */
 int L = 0;            /* Line number (not used here) */
 int symbolCount = 0;  /* Number of symbols */
@@ -70,58 +70,117 @@ void initData()
     commandTable[0].cmdName = "mov";
     commandTable[0].opCode = 0;
     commandTable[0].numOfOps = 2;
+    commandTable[0].srcLegalAddrs[0] = 0;
+    commandTable[0].srcLegalAddrs[1] = 1;
+    commandTable[0].srcLegalAddrs[2] = 2;
+    commandTable[0].srcLegalAddrs[3] = 3;
+    commandTable[0].destLegalAddrs[0] = 1;
+    commandTable[0].destLegalAddrs[1] = 2;
+    commandTable[0].destLegalAddrs[2] = 3;
 
     commandTable[1].cmdName = "cmp";
     commandTable[1].opCode = 1;
     commandTable[1].numOfOps = 2;
+    commandTable[1].srcLegalAddrs[0] = 0;
+    commandTable[1].srcLegalAddrs[1] = 1;
+    commandTable[1].srcLegalAddrs[2] = 2;
+    commandTable[1].srcLegalAddrs[3] = 3;
+    commandTable[1].destLegalAddrs[0] = 0;
+    commandTable[1].destLegalAddrs[1] = 1;
+    commandTable[1].destLegalAddrs[2] = 2;
+    commandTable[1].destLegalAddrs[3] = 3;
 
     commandTable[2].cmdName = "add";
     commandTable[2].opCode = 2;
     commandTable[2].numOfOps = 2;
+    commandTable[2].srcLegalAddrs[0] = 0;
+    commandTable[2].srcLegalAddrs[1] = 1;
+    commandTable[2].srcLegalAddrs[2] = 2;
+    commandTable[2].srcLegalAddrs[3] = 3;
+    commandTable[2].destLegalAddrs[0] = 1;
+    commandTable[2].destLegalAddrs[1] = 2;
+    commandTable[2].destLegalAddrs[2] = 3;
 
     commandTable[3].cmdName = "sub";
     commandTable[3].opCode = 3;
     commandTable[3].numOfOps = 2;
+    commandTable[3].srcLegalAddrs[0] = 0;
+    commandTable[3].srcLegalAddrs[1] = 1;
+    commandTable[3].srcLegalAddrs[2] = 2;
+    commandTable[3].srcLegalAddrs[3] = 3;
+    commandTable[3].destLegalAddrs[0] = 1;
+    commandTable[3].destLegalAddrs[1] = 2;
+    commandTable[3].destLegalAddrs[2] = 3;
 
     commandTable[4].cmdName = "not";
     commandTable[4].opCode = 4;
     commandTable[4].numOfOps = 1;
+    commandTable[4].destLegalAddrs[0] = 1;
+    commandTable[4].destLegalAddrs[1] = 2;
+    commandTable[4].destLegalAddrs[2] = 3;
 
     commandTable[5].cmdName = "clr";
     commandTable[5].opCode = 5;
     commandTable[5].numOfOps = 1;
+    commandTable[5].destLegalAddrs[0] = 1;
+    commandTable[5].destLegalAddrs[1] = 2;
+    commandTable[5].destLegalAddrs[2] = 3;
 
     commandTable[6].cmdName = "lea";
     commandTable[6].opCode = 6;
     commandTable[6].numOfOps = 2;
+    commandTable[6].srcLegalAddrs[0] = 1;
+    commandTable[6].srcLegalAddrs[1] = 2;
+    commandTable[6].destLegalAddrs[0] = 1;
+    commandTable[6].destLegalAddrs[1] = 2;
+    commandTable[6].destLegalAddrs[2] = 3;
 
     commandTable[7].cmdName = "inc";
     commandTable[7].opCode = 7;
     commandTable[7].numOfOps = 1;
+    commandTable[7].destLegalAddrs[0] = 1;
+    commandTable[7].destLegalAddrs[1] = 2;
+    commandTable[7].destLegalAddrs[2] = 3;
 
     commandTable[8].cmdName = "dec";
     commandTable[8].opCode = 8;
     commandTable[8].numOfOps = 1;
+    commandTable[8].destLegalAddrs[0] = 1;
+    commandTable[8].destLegalAddrs[1] = 2;
+    commandTable[8].destLegalAddrs[2] = 3;
 
     commandTable[9].cmdName = "jmp";
     commandTable[9].opCode = 9;
     commandTable[9].numOfOps = 1;
+    commandTable[9].destLegalAddrs[0] = 1;
+    commandTable[9].destLegalAddrs[1] = 3;
 
     commandTable[10].cmdName = "bne";
     commandTable[10].opCode = 10;
     commandTable[10].numOfOps = 1;
+    commandTable[10].destLegalAddrs[0] = 1;
+    commandTable[10].destLegalAddrs[1] = 3;
 
     commandTable[11].cmdName = "red";
     commandTable[11].opCode = 11;
     commandTable[11].numOfOps = 1;
+    commandTable[11].destLegalAddrs[0] = 1;
+    commandTable[11].destLegalAddrs[1] = 2;
+    commandTable[11].destLegalAddrs[2] = 3;
 
     commandTable[12].cmdName = "prn";
     commandTable[12].opCode = 12;
     commandTable[12].numOfOps = 1;
+    commandTable[12].destLegalAddrs[0] = 0;
+    commandTable[12].destLegalAddrs[1] = 1;
+    commandTable[12].destLegalAddrs[2] = 2;
+    commandTable[12].destLegalAddrs[3] = 3;
 
     commandTable[13].cmdName = "jsr";
     commandTable[13].opCode = 13;
     commandTable[13].numOfOps = 1;
+    commandTable[13].destLegalAddrs[0] = 1;
+    commandTable[13].destLegalAddrs[1] = 3;
 
     commandTable[14].cmdName = "rts";
     commandTable[14].opCode = 14;
@@ -132,6 +191,32 @@ void initData()
     commandTable[15].numOfOps = 0;
 }
 
+int getOpcode(char *token)
+{
+    int i;
+    for (i = 0; i < MAX_COMMANDS; i++)
+    {
+        if (strcmp(token, commandTable[i].cmdName) == 0)
+        {
+            return commandTable[i].opCode;
+        }
+    }
+    return -1;
+}
+
+void printIstruction(Instruction *instruction)
+{
+    int i;
+    printf("Instruction: %s\n", instruction->name);
+    printf("Opcode: %d\n", instruction->opcode);
+    for (i = 0; i < MAX_OPERANDS; i++)
+    {
+        if (instruction->operands[i] != NULL)
+        {
+            printf("Operand %d: %s\n", i, instruction->operands[i]);
+        }
+    }
+}
 /* Table containing all symbols found by the assembler */
 
 Symbol *symbolTable[MAX_SYMBOLS];
@@ -184,7 +269,7 @@ void addSymbol(const char *name, SymbolType type, unsigned int value)
     unsigned int hashVal;
     Symbol *sym;
 
-    printf("Inserting symbol %s to table\n", name);
+    printf("Inserting symbol %s to table with value %d\n", name, value);
 
     if ((sym = lookupSymbol(name)) == NULL)
     {

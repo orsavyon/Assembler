@@ -74,6 +74,14 @@ int main(int argc, char *argv[])
                 rewind(mc);
                 /* Perform the first pass of the assembler */
                 firstPass(mc);
+                if (errorFlag)
+                {
+                    fprintf(stderr, "Errors detected in the first pass. Exiting...\n");
+                    free(fileName);
+                    fclose(mc);
+                    fclose(cp);
+                    exit(1);
+                }
                 rewind(mc);
                 fclose(mc);
             }

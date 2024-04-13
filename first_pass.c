@@ -9,11 +9,7 @@
 
 void firstPass(FILE *fp)
 {
-
     char line[MAX_LINE_LENGTH];
-    int IC = 0; /* Initialize IC to 0 */
-    int DC = 0; /* Initialize DC to 0 */
-
     initData();
     initSymbolTable();
 
@@ -72,17 +68,23 @@ void firstPass(FILE *fp)
 
                     if (lookupSymbol(symbolName) == NULL)
                     {
-                        addSymbol(symbolName, code, DC);
+                        printf("TEST --> Inserting symbol %s with code attribute and IC = %d\n", symbolName, IC);
+                        addSymbol(symbolName, code, IC + 100);
                     }
                     else
                     {
                         handleError("TEST --> Symbol already defined", lineNum, line);
                     }
-                }
-                else if (getLineType(remainingLine) == LINE_INSTRUCTION)
-                {
-                    printf("TEST --> Instruction in label\n");
-                    processInstruction(remainingLine);
+                    if (getLineType(remainingLine) == LINE_INSTRUCTION)
+                    {
+                        printf("TEST --> Instruction in label\n");
+                        processInstruction(remainingLine);
+                        printf("TEST --> IC after label instruction: %d\n", IC);
+                    }
+                    else
+                    {
+                        handleError("TEST --> Invalid line", lineNum, line);
+                    }
                 }
                 else
                 {
@@ -100,6 +102,7 @@ void firstPass(FILE *fp)
         case LINE_INSTRUCTION:
             printf("TEST --> Instruction\n");
             processInstruction(line);
+            printf("TEST --> IC after process instruction: %d\n", IC);
             break;
 
         case INVALID_LINE:
@@ -411,6 +414,14 @@ DirectiveType getDirectiveType(char *line)
     {
         return STRING_DIRECTIVE;
     }
+    if (strcmp(directiveName, ".entry") == 0)
+    {
+        return ENTRY_DIRECTIVE;
+    }
+    if (strcmp(directiveName, ".extern") == 0)
+    {
+        return EXTERN_DIRECTIVE;
+    }
     else
     {
         return INVALID_DIRECTIVE;
@@ -419,7 +430,29 @@ DirectiveType getDirectiveType(char *line)
 
 void processExternDirective(char *line)
 {
+
+    char *token;
+    token = strtok(line + 7, ",");
     printf("TEST --> Processing extern directive\n");
+    printf("TEST --> Line exten directive: %s\n", line);
+    while (token != NULL)
+    {
+        Symbol *symbol;
+        printf("TEST --> Token: %s\n", token);
+        trimLine(token);
+
+        symbol = lookupSymbol(token);
+        if (symbol)
+        {
+            printf("TEST --> Symbol Found: %s\n", symbol->symbolName);
+        }
+        else
+        {
+            printf("TEST --> Symbol Not Found: %s\n", token);
+            addSymbol(token, external, 0);
+        }
+        token = strtok(NULL, ",");
+    }
 }
 /* ------ end LINE_DIRECTIVE code  */
 
@@ -444,6 +477,21 @@ void processExternDirective(char *line)
 
 */
 
+/*
+ * TODO: robust check
+ * ! check if the operand is a valid register
+ * ! check if the operand is a valid number
+ * ! check if the operand is a valid label
+ * ! check if the operand is a valid index
+ * ! check if the operand is a valid immediate value
+ * ! check if the operand is a valid direct value
+ * ! check if the operand is a valid register value
+ * ! check if the operand is a valid register index
+ * ! check if the operand is a valid register direct
+ * ! check if the operand is a valid register immediate
+ * ! check for commas
+ */
+
 int isInstruction(char *line)
 {
     char *instructionName;
@@ -465,13 +513,89 @@ int isInstruction(char *line)
 
 void processInstruction(char *line)
 {
-    if (isValidInstruction(line))
+    Instruction instruction;
+    L = 0;
+    memset(&instruction, 0, sizeof(instruction));
+    if ((parseInstruction(line, &instruction)) != NULL)
     {
-        printf("TEST --> Valid instruction\n");
+
+        printf("TEST --> Valid instruction in processInstruction\n");
+        printIstruction(&instruction);
+        L = 1;
+        /* Decode the instruction's operands and calculate L */
+        L += decodeOperands(instruction.operands);
+        printf("TEST --> L: %d\n", L);
+        IC += L;
+        printf("TEST --> IC: %d\n", IC);
     }
     else
     {
         handleError("TEST --> Invalid instruction", lineNum, line);
+    }
+}
+
+Instruction *parseInstruction(char *line, Instruction *instruction)
+{
+    char *buffer = strdup(line);
+    if (!buffer)
+    {
+        return NULL;
+    }
+    if (isValidInstruction(buffer))
+    {
+
+        char *token = strtok(buffer, " \t");
+        int i = 0;
+        printf("TEST --> Parsing instruction\n");
+        if (!token)
+        {
+            free(buffer);
+            return NULL; /* code */
+        }
+
+        instruction->name = strdup(token);
+        if (!instruction->name)
+        {
+            free(buffer);
+            return NULL;
+        }
+
+        instruction->opcode = getOpcode(token);
+        token = strtok(NULL, " \t,");
+        printf("TEST --> Parsing instruction again\n");
+
+        while (token && i < MAX_OPERANDS)
+        {
+            printf("TEST --> Token of instruction: %s\n", token);
+            instruction->operands[i] = strdup(token);
+            if (!instruction->operands[i])
+            {
+                int j;
+                for (j = 0; j < i; j++)
+                {
+                    free(instruction->operands[j]);
+                }
+
+                free(instruction->name);
+                free(buffer);
+                return NULL;
+            }
+            i++;
+            token = strtok(NULL, " \t,");
+        }
+        printf("TEST --> Instruction name: %s\n", instruction->name);
+        printf("TEST --> Opcode: %d\n", instruction->opcode);
+        printf("TEST --> Operand 1: %s\n", instruction->operands[0]);
+        printf("TEST --> Operand 2: %s\n", instruction->operands[1]);
+        printf("TEST --> Number of operands: %d\n", i);
+        free(buffer);
+
+        return instruction;
+    }
+    else
+    {
+        handleError("TEST --> Invalid instruction", lineNum, line);
+        return NULL;
     }
 }
 
@@ -494,6 +618,7 @@ int isValidInstruction(char *line)
     {
         if (strcmp(instructionName, commandTable[i].cmdName) == 0)
         {
+            printf("TEST --> Instruction found: %s\n", commandTable[i].cmdName);
             free(instructionName);
             free(operands);
             return 1;
@@ -502,6 +627,67 @@ int isValidInstruction(char *line)
     free(instructionName);
     free(operands);
     return 0;
+}
+
+int decodeOperands(char *operands[])
+{
+    int totalMemoryLines = 0;
+    int i;
+    Addressing addrMethod;
+
+    for (i = 0; i < MAX_OPERANDS; i++)
+    {
+        if (operands[i] == NULL)
+        {
+            continue;
+        }
+        addrMethod = getAddressingMethod(operands[i]);
+        switch (addrMethod)
+        {
+        case IMMEDIATE:
+            printf("Operand %d (%s) uses Immediate addressing\n", i, operands[i]);
+            totalMemoryLines += 1;
+            break;
+        case DIRECT:
+            printf("Operand %d (%s) uses Direct addressing\n", i, operands[i]);
+            totalMemoryLines += 1;
+            break;
+        case INDEX:
+            printf("Operand %d (%s) uses Index addressing\n", i, operands[i]);
+            totalMemoryLines += 2;
+            break;
+        case REGISTER:
+            printf("Operand %d (%s) uses Register addressing\n", i, operands[i]);
+            totalMemoryLines += 1;
+            break;
+        case INVALID:
+            printf("Operand %d (%s) uses Invalid addressing\n", i, operands[i]);
+            break;
+        }
+    }
+    printf("TEST --> Total memory lines: %d\n", totalMemoryLines);
+    return totalMemoryLines;
+}
+
+Addressing getAddressingMethod(char *operand)
+{
+    if (operand[0] == '#')
+    {
+        printf("TEST --> Immediate\n");
+        return IMMEDIATE;
+    }
+    if (strchr(operand, '[') && strchr(operand, ']'))
+    {
+        printf("TEST --> Index\n");
+        return INDEX;
+    }
+    if (operand[0] == 'r' && isdigit(operand[1]))
+    {
+        printf("TEST --> Register\n");
+        return REGISTER;
+    }
+    printf("TEST --> Direct\n");
+    return DIRECT;
 }
 
 /* end LINE_INSTRUCTION code */

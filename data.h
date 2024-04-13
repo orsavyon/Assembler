@@ -49,6 +49,22 @@ typedef struct Command
 
 extern Command commandTable[CMD_NUM]; /* Table of assembler commands */
 
+typedef struct ParsedInstruction
+{
+    char *name;
+    int opcode;
+    char *operands[MAX_OPERANDS];
+} Instruction;
+
+typedef enum Addressings
+{
+    IMMEDIATE = 0,
+    DIRECT = 1,
+    INDEX = 2,
+    REGISTER = 3,
+    INVALID = -1
+} Addressing;
+
 /* Union defining a word in the assembler's memory */
 typedef union Word
 {
@@ -62,6 +78,15 @@ typedef union Word
     } bits;
     unsigned int value; /* The full word value */
 } Word;
+
+typedef struct MemoryEntry
+{
+    Word *word;
+    int type;
+    char *symbol;
+} MemoryEntry;
+
+extern MemoryEntry memory[MAX_DATA]; /* Memory array for the assembler */
 
 /* Enumeration for different types of symbols */
 typedef enum
@@ -103,6 +128,10 @@ typedef struct Translation
 
 /* Function prototypes for operations on the assembler's data structures */
 void initData();
+
+int getOpcode(char *token); /* Get the opcode for a command */
+
+void printIstruction(Instruction *instruction);
 
 /* Initialize data for assembly processing */
 void insertSymbolToTable(const char *symbolName, SymbolType symbolType, unsigned int value); /* Insert a symbol into the symbol table */
@@ -155,4 +184,5 @@ void initTranslationTable();
 void insertTranslationToTable(int decimalAddress, Word *word);
 
 void printMemory();
+
 #endif /* DATA_H */
