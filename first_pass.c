@@ -7,9 +7,25 @@
 #include "first_pass.h"
 #include "data.h"
 
+/*
+ * This code implements the first pass of a two-pass assembler. It reads an assembly source file line-by-line,
+ * categorizes each line, and processes it accordingly. The major functions include:
+ * - Initializing data structures for symbols and machine instructions.
+ * - Categorizing lines as blank, comment, definition, label, directive, or instruction, and processing them.
+ * - Handling labels and adding them to a symbol table with appropriate attributes based on the context (data or code).
+ * - Processing directives for data allocation, string handling, and extern definitions.
+ * - Parsing assembly instructions, generating machine code, and updating program counters.
+ * - Robust error handling for various syntax and semantic issues to ensure the assembler's stability and reliability.
+ * - Final steps include printing the symbol table and updating symbol values based on data and instruction sizes.
+ * This structured approach ensures the source code is prepared for the second pass where actual binary translation occurs.
+ */
+
 void firstPass(FILE *fp)
 {
     char line[MAX_LINE_LENGTH];
+    IC = 0;
+    DC = 0;
+
     initData();
     initSymbolTable();
 
@@ -337,11 +353,16 @@ void processDataDirective(char *line)
             if (symbol && symbol->symbolType == mdefine)
             {
                 printf("TEST --> Symbol: %s\n", symbol->symbolName);
-                memory[DC++] = symbol->value;
+                printf("TEST --> DC: %d\n", DC);
+                memory[DC + IC] = symbol->value;
+                DC++;
             }
             else if (isdigit(token[0]) || token[0] == '-' || token[0] == '+')
             {
-                memory[DC++] = atoi(token);
+                printf("TEST --> DC: %d\n", DC);
+
+                memory[DC + IC] = atoi(token);
+                DC++;
             }
             else
             {
@@ -387,9 +408,13 @@ void processDataDirective(char *line)
             for (c = start; c < end; c++)
             {
                 printf("TEST --> Char: %c\n", *c);
-                memory[DC++] = (unsigned char)*c;
+                printf("TEST --> DC: %d\n", DC);
+                memory[DC + IC] = (unsigned char)*c;
+                DC++;
             }
-            memory[DC++] = '\0';
+            printf("TEST --> DC: %d\n", DC);
+            memory[DC + IC] = '\0';
+            DC++;
         }
         else
         {
@@ -521,11 +546,12 @@ void processInstruction(char *line)
 
         printf("TEST --> Valid instruction in processInstruction\n");
         printIstruction(&instruction);
+        memory[IC++] = instruction.opcode;
         L = 1;
         /* Decode the instruction's operands and calculate L */
         L += decodeOperands(instruction.operands);
         printf("TEST --> L: %d\n", L);
-        IC += L;
+
         printf("TEST --> IC: %d\n", IC);
     }
     else
@@ -632,6 +658,7 @@ int isValidInstruction(char *line)
 int decodeOperands(char *operands[])
 {
     int totalMemoryLines = 0;
+    int isSrcReg = 0;
     int i;
     Addressing addrMethod;
 
@@ -645,23 +672,45 @@ int decodeOperands(char *operands[])
         switch (addrMethod)
         {
         case IMMEDIATE:
-            printf("Operand %d (%s) uses Immediate addressing\n", i, operands[i]);
+            printf("Operand %d (%s) uses Immediate addressing IC = %d\n", i, operands[i], IC);
+            memory[IC++] = atoi(operands[i] + 1);
+            printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
+
             totalMemoryLines += 1;
             break;
         case DIRECT:
-            printf("Operand %d (%s) uses Direct addressing\n", i, operands[i]);
+            printf("Operand %d (%s) uses Direct addressing IC = %d\n", i, operands[i], IC);
+            memory[IC++] = -1;
+            printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
             totalMemoryLines += 1;
             break;
         case INDEX:
-            printf("Operand %d (%s) uses Index addressing\n", i, operands[i]);
+            printf("Operand %d (%s) uses Index addressing IC = %d\n", i, operands[i], IC);
+            memory[IC++] = -1;
+            memory[IC++] = -1;
+            printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
+
             totalMemoryLines += 2;
             break;
         case REGISTER:
-            printf("Operand %d (%s) uses Register addressing\n", i, operands[i]);
-            totalMemoryLines += 1;
+            printf("Operand %d (%s) uses Register addressing IC = %d\n", i, operands[i], IC);
+            if (isSrcReg == 0)
+            {
+                memory[IC++] = atoi(operands[i] + 1);
+                printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
+
+                totalMemoryLines += 1;
+                isSrcReg = 1;
+            }
+            else
+            {
+                memory[IC] += atoi(operands[i] + 1) << 2;
+                printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
+                totalMemoryLines += 0;
+            }
             break;
         case INVALID:
-            printf("Operand %d (%s) uses Invalid addressing\n", i, operands[i]);
+            printf("Operand %d (%s) uses Invalid addressing IC = %d\n", i, operands[i], IC);
             break;
         }
     }

@@ -83,10 +83,11 @@ typedef struct MemoryEntry
 {
     Word *word;
     int type;
+    int value;
     char *symbol;
 } MemoryEntry;
 
-extern MemoryEntry memory[MAX_DATA]; /* Memory array for the assembler */
+extern MemoryEntry memoryLines[MAX_DATA]; /* Memory array for the assembler */
 
 /* Enumeration for different types of symbols */
 typedef enum
@@ -184,5 +185,7 @@ void initTranslationTable();
 void insertTranslationToTable(int decimalAddress, Word *word);
 
 void printMemory();
+
+void printMemoryLines();
 
 #endif /* DATA_H */

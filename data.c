@@ -318,7 +318,7 @@ void printMemory()
 {
     int i;
     printf("Memory Content:\n");
-    for (i = 0; i < DC; i++)
+    for (i = 0; i < IC + DC; i++)
     {
         printf("Memory[%d]: %d\n", i, memory[i]);
     }
