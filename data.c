@@ -60,6 +60,9 @@ int lineNum = 0;      /* Current line number */
 int errorFlag = 0;    /* Flag for error detection */
 int memory[MAX_DATA]; /* Memory array for the assembler */
 
+MemoryEntry memoryLines[MAX_DATA];
+/* Data array for the assembler */
+
 /**
  * Initializes the command table with predefined assembly commands.
  */
@@ -321,5 +324,43 @@ void printMemory()
     for (i = 0; i < IC + DC; i++)
     {
         printf("Memory[%d]: %d\n", i, memory[i]);
+    }
+}
+
+void initMemoryLines()
+{
+    int i;
+    for (i = 0; i < MAX_DATA; i++)
+    {
+        memoryLines[i].word = malloc(sizeof(Word));
+        if (memoryLines[i].word == NULL)
+        {
+            fprintf(stderr, "Memory allocation failed\n");
+            exit(EXIT_FAILURE);
+        }
+        memoryLines[i].word->value = 0;
+        memoryLines[i].type = -1;
+        memoryLines[i].value = 0;
+        memoryLines[i].symbol = NULL;
+    }
+}
+
+void freeMemoryLines()
+{
+    int i;
+    for (i = 0; i < MAX_DATA; i++)
+    {
+        free(memoryLines[i].word);
+        memoryLines[i].word = NULL;
+    }
+}
+
+void printMemoryLines()
+{
+    int i;
+    printf("Memory Content:\n");
+    for (i = 0; i < IC + DC; i++)
+    {
+        printf("MemoryLines[%d]: %d\n", i, memoryLines[i].value);
     }
 }

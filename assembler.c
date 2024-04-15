@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "data.h"
 #include "first_pass.h"
+#include "second_pass.h"
 
 /**
  * @brief Entry point of the assembler program.
@@ -83,6 +84,8 @@ int main(int argc, char *argv[])
                     exit(1);
                 }
                 rewind(mc);
+                /* Perform the second pass of the assembler */
+                secondPass(mc);
                 fclose(mc);
             }
         }

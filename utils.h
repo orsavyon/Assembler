@@ -61,4 +61,6 @@ void handleError(const char *errorMessage, int lineNumber, char *line);
  */
 void trimLine(char *line);
 
+int isNumeric(const char *str);
+
 #endif /* UTILS_H */

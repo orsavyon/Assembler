@@ -174,3 +174,13 @@ int intTo14Bit(int value)
 {
     return value & 0x3FFF;
 }
+
+int isNumeric(const char *str)
+{
+    while (*str)
+    {
+        if (!isdigit(*str++) && *str != '+' && *str != '-')
+            return 0;
+    }
+    return 1;
+}

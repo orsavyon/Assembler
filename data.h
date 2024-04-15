@@ -85,6 +85,7 @@ typedef struct MemoryEntry
     int type;
     int value;
     char *symbol;
+    unsigned int address;
 } MemoryEntry;
 
 extern MemoryEntry memoryLines[MAX_DATA]; /* Memory array for the assembler */
@@ -187,5 +188,9 @@ void insertTranslationToTable(int decimalAddress, Word *word);
 void printMemory();
 
 void printMemoryLines();
+
+void initMemoryLines();
+
+void freeMemoryLines();
 
 #endif /* DATA_H */

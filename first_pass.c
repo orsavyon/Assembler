@@ -20,6 +20,10 @@
  * This structured approach ensures the source code is prepared for the second pass where actual binary translation occurs.
  */
 
+/*
+ * TODO: need to implement encoding to binary and changing memory structure to translate
+ */
+
 void firstPass(FILE *fp)
 {
     char line[MAX_LINE_LENGTH];
@@ -28,6 +32,7 @@ void firstPass(FILE *fp)
 
     initData();
     initSymbolTable();
+    initMemoryLines();
 
     printf("\n --- in firstPass --- \n\n");
     while (fgets(line, MAX_LINE_LENGTH, fp) != NULL)
@@ -128,25 +133,20 @@ void firstPass(FILE *fp)
             break;
         }
         symbolFlag = 0;
-        /*
-
-        // Decode the instruction's operands and calculate L
-        int L = decodeOperands(line);
-
-        // Generate the binary code of the instruction
-        generateBinaryCode(line);
-
-        // Update IC to IC + L
-        IC += L;
-        */
     }
     printSymbolTable();
     printMemory();
+    printf(" --- memory lines --- \n");
+    printMemoryLines();
 
-    /* Update the value of each symbol characterized as data in the symbol table by adding IC + 100 */
-    /*updateSymbolValues(IC + 100); */
-
-    /* Start the second pass */
+    if (errorFlag == 1)
+    {
+        printf("TEST --> Error flag is set\n");
+    }
+    else
+    {
+        printf("TEST --> Error flag is not set\n");
+    }
 }
 
 /* start HELPERS code */
@@ -355,6 +355,8 @@ void processDataDirective(char *line)
                 printf("TEST --> Symbol: %s\n", symbol->symbolName);
                 printf("TEST --> DC: %d\n", DC);
                 memory[DC + IC] = symbol->value;
+                memoryLines[DC + IC].type = data;
+                memoryLines[DC + IC].value = symbol->value;
                 DC++;
             }
             else if (isdigit(token[0]) || token[0] == '-' || token[0] == '+')
@@ -362,6 +364,9 @@ void processDataDirective(char *line)
                 printf("TEST --> DC: %d\n", DC);
 
                 memory[DC + IC] = atoi(token);
+                memoryLines[DC + IC].type = data;
+                memoryLines[DC + IC].value = atoi(token);
+
                 DC++;
             }
             else
@@ -410,10 +415,15 @@ void processDataDirective(char *line)
                 printf("TEST --> Char: %c\n", *c);
                 printf("TEST --> DC: %d\n", DC);
                 memory[DC + IC] = (unsigned char)*c;
+                memoryLines[DC + IC].type = data;
+                memoryLines[DC + IC].value = (unsigned char)*c;
+
                 DC++;
             }
             printf("TEST --> DC: %d\n", DC);
             memory[DC + IC] = '\0';
+            memoryLines[DC + IC].type = data;
+            memoryLines[DC + IC].value = '\0';
             DC++;
         }
         else
@@ -660,6 +670,9 @@ int decodeOperands(char *operands[])
     int totalMemoryLines = 0;
     int isSrcReg = 0;
     int i;
+    char *symbolName, *start, *end;
+    char index[256];
+    char *copy;
     Addressing addrMethod;
 
     for (i = 0; i < MAX_OPERANDS; i++)
@@ -673,30 +686,94 @@ int decodeOperands(char *operands[])
         {
         case IMMEDIATE:
             printf("Operand %d (%s) uses Immediate addressing IC = %d\n", i, operands[i], IC);
-            memory[IC++] = atoi(operands[i] + 1);
+            memory[IC] = atoi(operands[i] + 1);
+            memoryLines[IC].type = data;
+            memoryLines[IC].value = atoi(operands[i] + 1);
+            IC++;
+
             printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
 
             totalMemoryLines += 1;
             break;
         case DIRECT:
             printf("Operand %d (%s) uses Direct addressing IC = %d\n", i, operands[i], IC);
-            memory[IC++] = -1;
+            memory[IC] = -1;
+            memoryLines[IC].type = data;
+            memoryLines[IC].value = -1;
+            IC++;
+
             printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
             totalMemoryLines += 1;
             break;
         case INDEX:
+
+            copy = strdup(operands[i]);
+            symbolName = strtok(copy, "[");
+            start = strchr(operands[i], '[');
+            end = strchr(operands[i], ']');
+            printf("Symbol name in index: %s\n", symbolName);
+
             printf("Operand %d (%s) uses Index addressing IC = %d\n", i, operands[i], IC);
-            memory[IC++] = -1;
-            memory[IC++] = -1;
+            if (lookupSymbol(symbolName) == NULL)
+            {
+                memory[IC] = -1;
+                memoryLines[IC].type = data;
+                memoryLines[IC].value = -1;
+                IC++;
+            }
+            else
+            {
+                memory[IC] = lookupSymbol(symbolName)->value;
+                memoryLines[IC].type = data;
+                memoryLines[IC].value = lookupSymbol(symbolName)->value;
+                IC++;
+            }
+
+            if (start && end && (end > start))
+            {
+                int length = end - start - 1;
+                if (length < 255)
+                {
+                    strncpy(index, start + 1, length);
+                    index[length] = '\0';
+
+                    if (isNumeric(index))
+                    {
+                        memory[IC] = atoi(index);
+                        memoryLines[IC].type = data;
+                        memoryLines[IC].value = atoi(index);
+                        IC++;
+                    }
+                    else if (lookupSymbol(index) == NULL)
+                    {
+                        memory[IC] = -1;
+                        memoryLines[IC].type = data;
+                        memoryLines[IC].value = -1;
+                        IC++;
+                    }
+                    else
+                    {
+                        memory[IC] = lookupSymbol(index)->value;
+                        memoryLines[IC].type = data;
+                        memoryLines[IC].value = lookupSymbol(index)->value;
+                        IC++;
+                    }
+                }
+            }
+
             printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
 
             totalMemoryLines += 2;
+            free(copy);
             break;
         case REGISTER:
             printf("Operand %d (%s) uses Register addressing IC = %d\n", i, operands[i], IC);
             if (isSrcReg == 0)
             {
-                memory[IC++] = atoi(operands[i] + 1);
+                memory[IC] = atoi(operands[i] + 1);
+                memoryLines[IC].type = data;
+                memoryLines[IC].value = atoi(operands[i] + 1);
+                IC++;
                 printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
 
                 totalMemoryLines += 1;
@@ -705,6 +782,8 @@ int decodeOperands(char *operands[])
             else
             {
                 memory[IC] += atoi(operands[i] + 1) << 2;
+                memoryLines[IC].type = data;
+                memoryLines[IC].value = atoi(operands[i] + 1) << 2;
                 printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
                 totalMemoryLines += 0;
             }
