@@ -79,10 +79,18 @@ typedef union Word
     unsigned int value; /* The full word value */
 } Word;
 
+typedef enum AddressingMethod
+{
+    IMMEDIATE_ADDRESSING,
+    DIRECT_ADDRESSING,
+    INDEX_ADDRESSING,
+    REGISTER_ADDRESSING,
+    INVALID_ADDRESSING
+} AddressingMethod;
 typedef struct MemoryEntry
 {
     Word *word;
-    int type;
+    AddressingMethod type;
     int value;
     char *symbol;
     unsigned int address;
@@ -193,4 +201,12 @@ void initMemoryLines();
 
 void freeMemoryLines();
 
+void printWordAsBinary(const Word word);
+
+void setImmediateValue(Word *word, int immediateValue, unsigned int areBits);
+
+void setRegisterValue(Word *word, int srcRegNum, int destRegNum, int hasSrc, int hasDest);
+
+int computeFourteenBitValue(int value);
+void printAsBinary(int value);
 #endif /* DATA_H */

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "data.h"
 #include "utils.h"
@@ -361,6 +362,94 @@ void printMemoryLines()
     printf("Memory Content:\n");
     for (i = 0; i < IC + DC; i++)
     {
-        printf("MemoryLines[%d]: %d\n", i, memoryLines[i].value);
+        switch (memoryLines[i].type)
+        {
+        case IMMEDIATE_ADDRESSING:
+            printf("MemoryLines[%d] IMMEDIATE: ", i);
+            printWordAsBinary(*memoryLines[i].word);
+            break;
+        case INDEX_ADDRESSING:
+            printf("MemoryLines[%d] INDEX: ", i);
+            printWordAsBinary(*memoryLines[i].word);
+            break;
+        case REGISTER_ADDRESSING:
+            printf("MemoryLines[%d] REGISTER: ", i);
+            printWordAsBinary(*memoryLines[i].word);
+            break;
+        case DIRECT_ADDRESSING:
+            printf("MemoryLines[%d] DIRECT: ", i);
+            printWordAsBinary(*memoryLines[i].word);
+            break;
+        default:
+            printf("MemoryLines[%d]: ", i);
+            printAsBinary(memoryLines[i].value);
+            break;
+        }
     }
+}
+
+void printWordAsBinary(Word word)
+{
+    int i;
+    printf("Binary: ");
+    for (i = 13; i >= 0; i--)
+    {
+        printf("%d", (word.value >> i) & 1);
+    }
+    printf("\n");
+}
+
+void printAsBinary(int value)
+{
+    int i;
+    printf("Binary: ");
+    for (i = 13; i >= 0; i--)
+    {
+        printf("%d", (value >> i) & 1);
+    }
+    printf("\n");
+}
+
+void setImmediateValue(Word *word, int immediateValue, unsigned int areBits)
+{
+    word->value = 0;
+    areBits &= 0x03;
+    if (immediateValue < 0)
+    {
+        immediateValue = (1 << 12) + immediateValue;
+    }
+    immediateValue &= 0xFFF;
+
+    word->value = (immediateValue << 2) | areBits;
+}
+
+void setRegisterValue(Word *word, int srcRegNum, int destRegNum, int hasSrc, int hasDest)
+{
+    word->value = 0;
+
+    srcRegNum &= 0x07;
+    destRegNum &= 0x07;
+
+    if (hasSrc)
+    {
+        word->value |= (srcRegNum << 5);
+    }
+
+    if (hasDest)
+    {
+        word->value |= (destRegNum << 2);
+    }
+}
+
+int computeFourteenBitValue(int value)
+{
+    if (value < 0)
+    {
+        value = ((1 << 14) + value) & ((1 << 14) - 1);
+    }
+    else
+    {
+        value &= ((1 << 14) - 1);
+    }
+    return value;
 }

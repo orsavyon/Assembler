@@ -22,6 +22,8 @@
 
 /*
  * TODO: need to implement encoding to binary and changing memory structure to translate
+ * - encode word for instruction
+ *
  */
 
 void firstPass(FILE *fp)
@@ -355,8 +357,8 @@ void processDataDirective(char *line)
                 printf("TEST --> Symbol: %s\n", symbol->symbolName);
                 printf("TEST --> DC: %d\n", DC);
                 memory[DC + IC] = symbol->value;
-                memoryLines[DC + IC].type = data;
-                memoryLines[DC + IC].value = symbol->value;
+
+                memoryLines[DC + IC].value = computeFourteenBitValue(symbol->value);
                 DC++;
             }
             else if (isdigit(token[0]) || token[0] == '-' || token[0] == '+')
@@ -364,8 +366,8 @@ void processDataDirective(char *line)
                 printf("TEST --> DC: %d\n", DC);
 
                 memory[DC + IC] = atoi(token);
-                memoryLines[DC + IC].type = data;
-                memoryLines[DC + IC].value = atoi(token);
+
+                memoryLines[DC + IC].value = computeFourteenBitValue(atoi(token));
 
                 DC++;
             }
@@ -415,15 +417,15 @@ void processDataDirective(char *line)
                 printf("TEST --> Char: %c\n", *c);
                 printf("TEST --> DC: %d\n", DC);
                 memory[DC + IC] = (unsigned char)*c;
-                memoryLines[DC + IC].type = data;
-                memoryLines[DC + IC].value = (unsigned char)*c;
+
+                memoryLines[DC + IC].value = computeFourteenBitValue((unsigned char)*c);
 
                 DC++;
             }
             printf("TEST --> DC: %d\n", DC);
             memory[DC + IC] = '\0';
-            memoryLines[DC + IC].type = data;
-            memoryLines[DC + IC].value = '\0';
+
+            memoryLines[DC + IC].value = computeFourteenBitValue('\0');
             DC++;
         }
         else
@@ -667,6 +669,9 @@ int isValidInstruction(char *line)
 
 int decodeOperands(char *operands[])
 {
+    Word word;
+    Word *wordPtr;
+    int value;
     int totalMemoryLines = 0;
     int isSrcReg = 0;
     int i;
@@ -685,10 +690,27 @@ int decodeOperands(char *operands[])
         switch (addrMethod)
         {
         case IMMEDIATE:
+            if (lookupSymbol(operands[i] + 1) != NULL)
+            {
+                value = lookupSymbol(operands[i] + 1)->value;
+            }
+            else
+            {
+                value = atoi(operands[i] + 1);
+            }
+            memset(&word, 0, sizeof(word));
+
+            setImmediateValue(&word, value, 0);
+
             printf("Operand %d (%s) uses Immediate addressing IC = %d\n", i, operands[i], IC);
+            printf("TEST --> Encoded Word: ");
+            printWordAsBinary(word);
+
             memory[IC] = atoi(operands[i] + 1);
-            memoryLines[IC].type = data;
-            memoryLines[IC].value = atoi(operands[i] + 1);
+
+            memoryLines[IC].word->value = word.value;
+            memoryLines[IC].type = IMMEDIATE_ADDRESSING;
+            memoryLines[IC].value = value;
             IC++;
 
             printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
@@ -698,7 +720,7 @@ int decodeOperands(char *operands[])
         case DIRECT:
             printf("Operand %d (%s) uses Direct addressing IC = %d\n", i, operands[i], IC);
             memory[IC] = -1;
-            memoryLines[IC].type = data;
+            memoryLines[IC].type = IMMEDIATE_ADDRESSING;
             memoryLines[IC].value = -1;
             IC++;
 
@@ -717,14 +739,14 @@ int decodeOperands(char *operands[])
             if (lookupSymbol(symbolName) == NULL)
             {
                 memory[IC] = -1;
-                memoryLines[IC].type = data;
+                memoryLines[IC].type = INDEX_ADDRESSING;
                 memoryLines[IC].value = -1;
                 IC++;
             }
             else
             {
                 memory[IC] = lookupSymbol(symbolName)->value;
-                memoryLines[IC].type = data;
+                memoryLines[IC].type = INDEX_ADDRESSING;
                 memoryLines[IC].value = lookupSymbol(symbolName)->value;
                 IC++;
             }
@@ -739,23 +761,38 @@ int decodeOperands(char *operands[])
 
                     if (isNumeric(index))
                     {
-                        memory[IC] = atoi(index);
-                        memoryLines[IC].type = data;
-                        memoryLines[IC].value = atoi(index);
+                        value = atoi(index);
+                        memset(&word, 0, sizeof(word));
+                        setImmediateValue(&word, value, 0);
+                        printf("TEST --> Encoded Word: ");
+                        printWordAsBinary(word);
+
+                        memory[IC] = value;
+                        memoryLines[IC].word->value = word.value;
+                        memoryLines[IC].type = INDEX_ADDRESSING;
+                        memoryLines[IC].value = value;
                         IC++;
                     }
                     else if (lookupSymbol(index) == NULL)
                     {
                         memory[IC] = -1;
-                        memoryLines[IC].type = data;
+                        memoryLines[IC].type = INDEX_ADDRESSING;
                         memoryLines[IC].value = -1;
                         IC++;
                     }
                     else
                     {
-                        memory[IC] = lookupSymbol(index)->value;
-                        memoryLines[IC].type = data;
-                        memoryLines[IC].value = lookupSymbol(index)->value;
+                        value = lookupSymbol(index)->value;
+                        memset(&word, 0, sizeof(word));
+                        setImmediateValue(&word, value, 0);
+                        printf("TEST --> Encoded Word: ");
+                        printWordAsBinary(word);
+
+                        memory[IC] = value;
+
+                        memoryLines[IC].word->value = word.value;
+                        memoryLines[IC].type = INDEX_ADDRESSING;
+                        memoryLines[IC].value = value;
                         IC++;
                     }
                 }
@@ -767,26 +804,55 @@ int decodeOperands(char *operands[])
             free(copy);
             break;
         case REGISTER:
-            printf("Operand %d (%s) uses Register addressing IC = %d\n", i, operands[i], IC);
-            if (isSrcReg == 0)
-            {
-                memory[IC] = atoi(operands[i] + 1);
-                memoryLines[IC].type = data;
-                memoryLines[IC].value = atoi(operands[i] + 1);
-                IC++;
-                printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
+            memset(&word, 0, sizeof(word));
+            value = atoi(operands[i] + 1);
+            memoryLines[IC].word = malloc(sizeof(Word));
 
-                totalMemoryLines += 1;
-                isSrcReg = 1;
+            printf("Operand %d (%s) uses Register addressing IC = %d\n", i, operands[i], IC);
+            if (memoryLines[IC].word)
+            {
+                if (isSrcReg == 0 && i == 0)
+                {
+                    setRegisterValue(memoryLines[IC].word, value, 0, 1, 0);
+                    printWordAsBinary(*memoryLines[IC].word);
+                    isSrcReg = 1;
+                }
+                else if (isSrcReg == 1 && i == 1)
+                {
+                    printf("TEST --> Setting register value src: %d, dest: %d\n", atoi(operands[i - 1] + 1), value);
+                    setRegisterValue(memoryLines[IC - 1].word, atoi(operands[i - 1] + 1), value, 1, 1);
+                    printWordAsBinary(*memoryLines[IC - 1].word);
+                }
+                else
+                {
+
+                    setRegisterValue(memoryLines[IC].word, 0, value, 0, 1);
+                    printWordAsBinary(*memoryLines[IC].word);
+                }
+
+                memoryLines[IC].type = REGISTER_ADDRESSING;
+                memoryLines[IC].value = memoryLines[IC].word->value;
+
+                printf("TEST --> Encoded Memory[%d]: ", IC);
+                printWordAsBinary(*(memoryLines[IC].word));
+                if (isSrcReg == 1 && i == 1)
+                {
+                    ;
+                }
+                else
+                {
+                    IC++;
+                    totalMemoryLines += 1;
+                }
+
+                printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
             }
             else
             {
-                memory[IC] += atoi(operands[i] + 1) << 2;
-                memoryLines[IC].type = data;
-                memoryLines[IC].value = atoi(operands[i] + 1) << 2;
-                printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
-                totalMemoryLines += 0;
+                printf("TEST --> Memory allocation failed\n");
+                handleError("Memory allocation failed", lineNum, operands[i]);
             }
+
             break;
         case INVALID:
             printf("Operand %d (%s) uses Invalid addressing IC = %d\n", i, operands[i], IC);
