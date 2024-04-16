@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "preprocessor.h"
-# include "macro_table.h"
+#include "macro_table.h"
+
 
 /* Checks if the given line is a macro definition. */
 int is_macro_def(char *line)
@@ -10,7 +11,7 @@ int is_macro_def(char *line)
     char clean_line[MAX_LINE_LENGTH];
     remove_prefix_white_spaces(line, clean_line);
 
-    if (strncmp(clean_line, "mcro ", 5) == 0)
+    if (strncmp(clean_line, "mcr ", 4) == 0)
         return 1;
     return 0;
 }
@@ -27,9 +28,7 @@ int is_macro_call(Macro *macro, char *line)
 
     while (macro != NULL)
     {
-        if (get_macro(macro, 
-        
-        clean_line) != NULL) 
+        if (get_macro(macro, clean_line) != NULL) 
         {
             macro = tmp;
             return 1;
@@ -74,7 +73,7 @@ enum line_type get_line_type(Macro *macro, char *line)
         return comment;
     
 
-    if (strcmp(clean_line, "endmcro") == 0) 
+    if (strcmp(clean_line, "endmcr") == 0) 
         return macro_end;
     
 
