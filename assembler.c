@@ -18,6 +18,7 @@
  * @param argv Array of command-line arguments.
  * @return int Program exit status.
  */
+
 int main(int argc, char *argv[])
 {
     FILE *fp, *cp, *mc;
@@ -53,6 +54,7 @@ int main(int argc, char *argv[])
                 fclose(fp);
                 exit(1);
             }
+
             else
             {
                 /* Copy the content of the source file to the new file after preprocessing */
@@ -86,6 +88,8 @@ int main(int argc, char *argv[])
                 rewind(mc);
                 /* Perform the second pass of the assembler */
                 secondPass(mc);
+                /*Create output files ob ent ext*/
+
                 fclose(mc);
             }
         }

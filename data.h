@@ -88,6 +88,7 @@ typedef enum AddressingMethod
     INSTRUCTION_ADDRESSING,
     INVALID_ADDRESSING
 } AddressingMethod;
+
 typedef struct MemoryEntry
 {
     Word *word;

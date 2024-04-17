@@ -146,7 +146,7 @@ void skipWhiteLines(FILE *fp)
 void handleError(const char *errorMessage, int lineNumber, char *line)
 {
     errorFlag = 1;
-    fprintf(stderr, "Error in line %d: %s\n\t%s\n", lineNumber, errorMessage, line);
+    fprintf(stderr, "ERROR ____ > Error in line %d: %s\n\t%s\n", lineNumber, errorMessage, line);
 }
 
 char *intToBinary(int value)
