@@ -85,6 +85,7 @@ typedef enum AddressingMethod
     DIRECT_ADDRESSING,
     INDEX_ADDRESSING,
     REGISTER_ADDRESSING,
+    INSTRUCTION_ADDRESSING,
     INVALID_ADDRESSING
 } AddressingMethod;
 typedef struct MemoryEntry
@@ -209,4 +210,5 @@ void setRegisterValue(Word *word, int srcRegNum, int destRegNum, int hasSrc, int
 
 int computeFourteenBitValue(int value);
 void printAsBinary(int value);
+void printFirstWordAsBinary(Word word);
 #endif /* DATA_H */

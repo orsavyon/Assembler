@@ -551,6 +551,12 @@ int isInstruction(char *line)
 void processInstruction(char *line)
 {
     Instruction instruction;
+    Word *firstWord = malloc(sizeof(Word));
+    if (!firstWord)
+    {
+        handleError("Memory allocation failed", lineNum, line);
+        return;
+    }
     L = 0;
     memset(&instruction, 0, sizeof(instruction));
     if ((parseInstruction(line, &instruction)) != NULL)
@@ -558,9 +564,28 @@ void processInstruction(char *line)
 
         printf("TEST --> Valid instruction in processInstruction\n");
         printIstruction(&instruction);
-        memory[IC++] = instruction.opcode;
+
+        setupFirstInstructionWord(firstWord, &instruction);
+
+        memoryLines[IC].word = malloc(sizeof(Word));
+        if (!memoryLines[IC].word)
+        {
+            handleError("Memory allocation failed", lineNum, line);
+            return;
+        }
+        else
+        {
+            memoryLines[IC].word = firstWord;
+            memoryLines[IC].type = INSTRUCTION_ADDRESSING;
+            memoryLines[IC].value = firstWord->value;
+            printWordAsBinary(*firstWord);
+        }
+
+        memory[IC] = firstWord->bits.opcode;
+
+        IC++;
+
         L = 1;
-        /* Decode the instruction's operands and calculate L */
         L += decodeOperands(instruction.operands);
         printf("TEST --> L: %d\n", L);
 
@@ -570,6 +595,65 @@ void processInstruction(char *line)
     {
         handleError("TEST --> Invalid instruction", lineNum, line);
     }
+}
+void setupFirstInstructionWord(Word *firstWord, Instruction *instruction)
+{
+    int srcAddressing = 0;
+    int destAddressing = 0;
+    memset(firstWord, 0, sizeof(Word));
+    firstWord->bits.opcode = instruction->opcode;
+    firstWord->bits.ARE = 0;
+
+    if (instruction->operands[0] && commandTable[instruction->opcode].numOfOps >= 1)
+    {
+        destAddressing = getAddressingMethod(instruction->operands[0]);
+    }
+
+    switch (commandTable[instruction->opcode].numOfOps)
+    {
+    case 0:
+        firstWord->bits.srcOp = 0;
+        firstWord->bits.desOp = 0;
+        break;
+    case 1:
+        if (isValidAddressingMode(destAddressing, commandTable[instruction->opcode].destLegalAddrs))
+        {
+            firstWord->bits.desOp = destAddressing;
+        }
+        else
+        {
+            handleError("Invalid addressing mode for destination", lineNum, instruction->operands[0]);
+        }
+        firstWord->bits.srcOp = 0;
+        break;
+    case 2:
+        srcAddressing = getAddressingMethod(instruction->operands[0]);
+        destAddressing = getAddressingMethod(instruction->operands[1]);
+        if (isValidAddressingMode(srcAddressing, commandTable[instruction->opcode].srcLegalAddrs) &&
+            isValidAddressingMode(destAddressing, commandTable[instruction->opcode].destLegalAddrs))
+        {
+            firstWord->bits.srcOp = srcAddressing;
+            firstWord->bits.desOp = destAddressing;
+        }
+        else
+        {
+            handleError("Invalid addressing modes for operands", lineNum, "line");
+        }
+        break;
+    }
+}
+
+int isValidAddressingMode(int mode, int allowedModes[])
+{
+    int i;
+    for (i = 0; i < 4; i++)
+    {
+        if (mode == allowedModes[i])
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 Instruction *parseInstruction(char *line, Instruction *instruction)
@@ -670,7 +754,6 @@ int isValidInstruction(char *line)
 int decodeOperands(char *operands[])
 {
     Word word;
-    Word *wordPtr;
     int value;
     int totalMemoryLines = 0;
     int isSrcReg = 0;

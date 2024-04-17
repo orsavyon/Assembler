@@ -380,12 +380,49 @@ void printMemoryLines()
             printf("MemoryLines[%d] DIRECT: ", i);
             printWordAsBinary(*memoryLines[i].word);
             break;
+        case INSTRUCTION_ADDRESSING:
+            printf("MemoryLines[%d] INSTRUCTION: ", i);
+            printFirstWordAsBinary(*memoryLines[i].word);
+            break;
         default:
             printf("MemoryLines[%d]: ", i);
             printAsBinary(memoryLines[i].value);
             break;
         }
     }
+}
+
+void printFirstWordAsBinary(Word word)
+{
+    int i;
+    printf("Binary: ");
+
+    for (i = 3; i >= 0; i--)
+    {
+        printf("%d", (word.bits.na >> i) & 1);
+    }
+
+    for (i = 3; i >= 0; i--)
+    {
+        printf("%d", (word.bits.opcode >> i) & 1);
+    }
+
+    for (i = 1; i >= 0; i--)
+    {
+        printf("%d", (word.bits.srcOp >> i) & 1);
+    }
+
+    for (i = 1; i >= 0; i--)
+    {
+        printf("%d", (word.bits.desOp >> i) & 1);
+    }
+
+    for (i = 1; i >= 0; i--)
+    {
+        printf("%d", (word.bits.ARE >> i) & 1);
+    }
+
+    printf("\n");
 }
 
 void printWordAsBinary(Word word)

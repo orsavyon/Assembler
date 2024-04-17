@@ -52,4 +52,8 @@ Instruction *parseInstruction(char *line, Instruction *instruction);
 
 Addressing getAddressingMethod(char *operand);
 
+int isValidAddressingMode(int mode, int allowedModes[]);
+
+void setupFirstInstructionWord(Word *firstWord, Instruction *instruction);
+
 #endif
