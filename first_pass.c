@@ -31,27 +31,35 @@ void firstPass(FILE *fp)
     char line[MAX_LINE_LENGTH];
     IC = 0;
     DC = 0;
-
+    
+    /* Initialize data structures */
     initData();
     initSymbolTable();
     initMemoryLines();
 
     printf("\n --- in firstPass --- \n\n");
+    /* Process each line of the source file */
     while (fgets(line, MAX_LINE_LENGTH, fp) != NULL)
     {
         lineNum++;
         trimLine(line);
         printf("TEST --> Line %d: %s\n", lineNum, line);
-
+        
+        /* Determine the type of the line and process accordingly */
         switch (getLineType(line))
         {
         case LINE_BLANK:
+            /* Ignore blank and comment lines */
+            /* ! Refactor */
             break;
         case LINE_COMMENT:
+            /* Ignore blank and comment lines */
+            /* ! Refactor */
             break;
 
         case LINE_DEFINITION:
             printf("TEST --> Definition\n");
+            /* Process constant definitions */
             processDefinition(line);
             break;
 
@@ -173,33 +181,41 @@ char *getFirstWord(const char *line)
     return firstWord;
 }
 
+
+/* Determines the type of a line */
 LineType getLineType(char *line)
 {
+    /* Check if the line is blank */
     if (line[0] == '\n' || line[0] == '\0' || isspace((unsigned char)line[0]))
     {
         return LINE_BLANK;
     }
+    /* Check if the line is a comment */
     if (line[0] == ';')
     {
         return LINE_COMMENT;
     }
+    /* Check if the line defines a constant */
     if (isConstantDefinition(line))
     {
         return LINE_DEFINITION;
     }
+    /* Check if the line contains a symbol */
     if (isSymbol(line))
     {
         return LINE_LABEL;
     }
+    /* Check if the line is a directive */
     if (line[0] == '.')
     {
         return LINE_DIRECTIVE;
     }
+    /* Check if the line represents an instruction */
     if (isInstruction(line))
     {
         return LINE_INSTRUCTION;
     }
-
+    /* If none of the above conditions are met, the line is invalid */
     return INVALID_LINE;
 }
 
@@ -218,6 +234,8 @@ int isSymbol(char *line)
     return 0;
 }
 /* end HELPERS code */
+
+
 
 /* ------ start LINE_DEFINITION code ------*/
 
