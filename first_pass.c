@@ -558,29 +558,7 @@ void processExternDirective(char *line)
 /* ############################### end LINE_DIRECTIVE code ############################### */
 
 
-
-
-
-/* ------ start LINE_INSTRUCTION code ------ */
-/*
-* TODO: Implement the following functions:
-* - isInstruction
-* - processInstruction
-* - isValidInstruction
-
-* isInstruction: Check if the line is an instruction
-* processInstruction: Process the instruction
-    - Check if the instruction is valid
-    - Parse the line to extract the instruction name and operands
-    - Decode the operands
-    - Generate the binary code of the instruction
-    - Update IC
-* isValidInstruction: Validate the instruction
-    - Parse the line to extract the instruction name and operands
-    - Check if the instruction name is valid
-    - Check if the operands are valid
-
-*/
+/* ############################### start LINE_INSTRUCTION code ############################### */
 
 /*
  * TODO: robust check
@@ -597,181 +575,242 @@ void processExternDirective(char *line)
  * ! check for commas
  */
 
+
+/**
+ * Implements the isInstruction function declared in first_pass.h.
+ */
 int isInstruction(char *line)
 {
-    char *instructionName;
+    char *instructionName; /* Variable to store the first word of the line */
     int i;
 
-    instructionName = getFirstWord(line);
+    instructionName = getFirstWord(line); /* Retrieve the first word from the line */
 
     printf("TEST --> Checking if instruction\n");
+    /* Loop through the command table to check for a match */
     for (i = 0; i < CMD_NUM; i++)
     {
         if (strcmp(instructionName, commandTable[i].cmdName) == 0)
         {
-            printf("TEST --> Instruction found: %s\n", commandTable[i].cmdName);
-            return 1;
+            printf("TEST --> Instruction found: %s\n", commandTable[i].cmdName); /* Debugging message indicating a match */
+            return 1; /* Return 1 if a match is found indicating an instruction */
         }
     }
-    return 0;
+    return 0; /* Return 0 if no match is found */
 }
 
+
+/**
+ * Implements the processInstruction function declared in first_pass.h.
+ */
 void processInstruction(char *line)
 {
-    Instruction instruction;
-    Word *firstWord = malloc(sizeof(Word));
+    Instruction instruction; /* Struct to store parsed instruction details */
+    Word *firstWord = malloc(sizeof(Word)); /* Allocate memory for the first word of the instruction */
     if (!firstWord)
     {
-        handleError("Memory allocation failed", lineNum, line);
+        handleError("Memory allocation failed", lineNum, line); /* Handle memory allocation failure */
         return;
     }
-    L = 0;
-    memset(&instruction, 0, sizeof(instruction));
-    if ((parseInstruction(line, &instruction)) != NULL)
+    L = 0; /* Initialize the line count for this instruction */
+    
+    memset(&instruction, 0, sizeof(instruction)); /* Zero out the instruction struct */
+    
+    if ((parseInstruction(line, &instruction)) != NULL) /* Parse the instruction from the line */
     {
 
         printf("TEST --> Valid instruction in processInstruction\n");
-        printIstruction(&instruction);
+        printIstruction(&instruction); /* Print the parsed instruction */
 
-        setupFirstInstructionWord(firstWord, &instruction);
+        setupFirstInstructionWord(firstWord, &instruction); /* Setup the first word based on the parsed instruction */
 
-        memoryLines[IC].word = malloc(sizeof(Word));
+        memoryLines[IC].word = malloc(sizeof(Word)); /* Allocate memory for storing the instruction in memory lines */
         if (!memoryLines[IC].word)
         {
-            handleError("Memory allocation failed", lineNum, line);
+            handleError("Memory allocation failed", lineNum, line); /* Handle memory allocation failure */
             return;
         }
         else
         {
-            memoryLines[IC].word = firstWord;
-            memoryLines[IC].type = INSTRUCTION_ADDRESSING;
-            memoryLines[IC].value = firstWord->value;
-            printWordAsBinary(*firstWord);
+            memoryLines[IC].word = firstWord; /* Assign the first word to the current instruction counter in memory lines */
+            memoryLines[IC].type = INSTRUCTION_ADDRESSING; /* Set the memory line type to instruction addressing */
+            memoryLines[IC].value = firstWord->value; /* Set the value of the memory line to the first word's value */
+            printWordAsBinary(*firstWord); /* Print the first word as binary for debugging */
         }
 
-        memory[IC] = firstWord->bits.opcode;
+        memory[IC] = firstWord->bits.opcode; /* Store the opcode in the main memory at the current instruction counter */
 
-        IC++;
+        IC++; /* Increment the instruction counter */
 
-        L = 1;
-        L += decodeOperands(instruction.operands);
+        L = 1; /* Set line count for the instruction */
+        L += decodeOperands(instruction.operands); /* Decode and add operand sizes to L */
         printf("TEST --> L: %d\n", L);
 
         printf("TEST --> IC: %d\n", IC);
     }
     else
     {
-        handleError("TEST --> Invalid instruction", lineNum, line);
+        handleError("TEST --> Invalid instruction", lineNum, line); /* Handle invalid instruction format */
     }
 }
+
+/**
+ * Implements the isValidInstruction function declared in first_pass.h.
+ */
+int isValidInstruction(char *line)
+{
+    char *instructionName = (char *)malloc(MAX_LINE_LENGTH * sizeof(char)); /* Allocate memory for instruction name */
+    char *operands = (char *)malloc(MAX_LINE_LENGTH * sizeof(char)); /* Allocate memory for storing operands */
+    int i;
+
+    printf("TEST --> Validating instruction\n");
+
+   /* Parse the line to extract the instruction name and its operands */
+    sscanf(line, "%s %[^\n]", instructionName, operands);
+
+    printf("TEST --> Instruction name: %s\n", instructionName);
+    printf("TEST --> Operands: %s\n", operands);
+
+    /* Loop through the command table to check if the instruction name is valid */
+    for (i = 0; i < CMD_NUM; i++)
+    {
+        if (strcmp(instructionName, commandTable[i].cmdName) == 0)
+        {
+            printf("TEST --> Instruction found: %s\n", commandTable[i].cmdName);
+            free(instructionName); /* Free allocated memory for instruction name */
+            free(operands); /* Free allocated memory for operands */
+            return 1; /* Return 1 if a valid instruction name is found */
+        }
+    }
+    free(instructionName); /* Free allocated memory if no valid instruction is found */
+    free(operands); /* Free allocated memory if no valid instruction is found */
+    return 0; /* Return 0 if no valid instruction name is found */
+}
+
+
+/**
+ * Implements the setupFirstInstructionWord function declared in first_pass.h.
+ */
 void setupFirstInstructionWord(Word *firstWord, Instruction *instruction)
 {
-    int srcAddressing = 0;
-    int destAddressing = 0;
-    memset(firstWord, 0, sizeof(Word));
-    firstWord->bits.opcode = instruction->opcode;
-    firstWord->bits.ARE = 0;
-
+    int srcAddressing = 0; /* Variable to store the source addressing method */
+    int destAddressing = 0; /* Variable to store the destination addressing method */
+    memset(firstWord, 0, sizeof(Word)); /* Initialize the firstWord struct to zero */
+    firstWord->bits.opcode = instruction->opcode; /* Set the opcode in the first word */
+    firstWord->bits.ARE = 0; /* Set the ARE bits to 0 (Absolute by default) */
+    
+    /* Check if the instruction has operands and determine the addressing method for destination */
     if (instruction->operands[0] && commandTable[instruction->opcode].numOfOps >= 1)
     {
         destAddressing = getAddressingMethod(instruction->operands[0]);
     }
 
+    /* Set the addressing modes based on the number of operands the command expects */
     switch (commandTable[instruction->opcode].numOfOps)
     {
     case 0:
-        firstWord->bits.srcOp = 0;
-        firstWord->bits.desOp = 0;
+        firstWord->bits.srcOp = 0; /* No source operand */
+        firstWord->bits.desOp = 0; /* No destination operand */
         break;
     case 1:
         if (isValidAddressingMode(destAddressing, commandTable[instruction->opcode].destLegalAddrs))
         {
-            firstWord->bits.desOp = destAddressing;
+            firstWord->bits.desOp = destAddressing; /* Set destination operand addressing mode */
         }
         else
         {
-            handleError("Invalid addressing mode for destination", lineNum, instruction->operands[0]);
+            handleError("Invalid addressing mode for destination", lineNum, instruction->operands[0]); /* Handle invalid destination addressing mode */
         }
-        firstWord->bits.srcOp = 0;
+        firstWord->bits.srcOp = 0; /* No source operand */
         break;
     case 2:
-        srcAddressing = getAddressingMethod(instruction->operands[0]);
-        destAddressing = getAddressingMethod(instruction->operands[1]);
+        srcAddressing = getAddressingMethod(instruction->operands[0]); /* Determine source addressing method */
+        destAddressing = getAddressingMethod(instruction->operands[1]); /* Determine destination addressing method */
         if (isValidAddressingMode(srcAddressing, commandTable[instruction->opcode].srcLegalAddrs) &&
             isValidAddressingMode(destAddressing, commandTable[instruction->opcode].destLegalAddrs))
         {
-            firstWord->bits.srcOp = srcAddressing;
-            firstWord->bits.desOp = destAddressing;
+            firstWord->bits.srcOp = srcAddressing; /* Set source operand addressing mode */
+            firstWord->bits.desOp = destAddressing; /* Set destination operand addressing mode */
         }
         else
         {
-            handleError("Invalid addressing modes for operands", lineNum, "line");
+            handleError("Invalid addressing modes for operands", lineNum, "line"); /* Handle invalid operand addressing modes */
         }
         break;
     }
 }
 
+
+
+/**
+ * Implements the isValidAddressingMode function declared in first_pass.h.
+ */
 int isValidAddressingMode(int mode, int allowedModes[])
 {
     int i;
+    /* Loop through the array of allowed addressing modes */
     for (i = 0; i < 4; i++)
     {
         if (mode == allowedModes[i])
         {
-            return 1;
+            return 1; /* Return 1 if the mode matches an allowed mode */
         }
     }
-    return 0;
+    return 0; /* Return 0 if no match is found, indicating the mode is not valid */
 }
 
+
+/**
+ * Implements the parseInstruction function declared in first_pass.h.
+ */
 Instruction *parseInstruction(char *line, Instruction *instruction)
 {
-    char *buffer = strdup(line);
+    char *buffer = strdup(line); /* Duplicate the line for manipulation */
     if (!buffer)
     {
-        return NULL;
+        return NULL; /* Return NULL if memory allocation fails */
     }
     if (isValidInstruction(buffer))
     {
 
-        char *token = strtok(buffer, " \t");
-        int i = 0;
+        char *token = strtok(buffer, " \t"); /* Tokenize the line to extract the instruction name */
+        int i = 0; /* Counter for operands */
         printf("TEST --> Parsing instruction\n");
         if (!token)
         {
             free(buffer);
-            return NULL; /* code */
+            return NULL; /* Return NULL if the first token (instruction name) is missing */
         }
 
-        instruction->name = strdup(token);
+        instruction->name = strdup(token); /* Store the instruction name */
         if (!instruction->name)
         {
             free(buffer);
-            return NULL;
+            return NULL; /* Return NULL if memory allocation fails for the instruction name */
         }
 
-        instruction->opcode = getOpcode(token);
-        token = strtok(NULL, " \t,");
+        instruction->opcode = getOpcode(token); /* Set the opcode based on the instruction name */
+        token = strtok(NULL, " \t,"); /* Continue tokenizing to get operands */
         printf("TEST --> Parsing instruction again\n");
 
         while (token && i < MAX_OPERANDS)
         {
-            printf("TEST --> Token of instruction: %s\n", token);
-            instruction->operands[i] = strdup(token);
+            printf("TEST --> Token of instruction: %s\n", token); 
+            instruction->operands[i] = strdup(token); /* Store the operand */
             if (!instruction->operands[i])
             {
                 int j;
                 for (j = 0; j < i; j++)
                 {
-                    free(instruction->operands[j]);
+                    free(instruction->operands[j]); /* Free any allocated operand strings on failure */
                 }
 
                 free(instruction->name);
                 free(buffer);
-                return NULL;
+                return NULL; /* Return NULL if memory allocation fails for an operand */
             }
             i++;
-            token = strtok(NULL, " \t,");
+            token = strtok(NULL, " \t,"); /* Continue to the next operand */
         }
         printf("TEST --> Instruction name: %s\n", instruction->name);
         printf("TEST --> Opcode: %d\n", instruction->opcode);
@@ -780,67 +819,42 @@ Instruction *parseInstruction(char *line, Instruction *instruction)
         printf("TEST --> Number of operands: %d\n", i);
         free(buffer);
 
-        return instruction;
+        return instruction; /* Return the filled instruction struct */
     }
     else
     {
         handleError("TEST --> Invalid instruction", lineNum, line);
-        return NULL;
+        return NULL; /* Return NULL if the instruction is not valid */
     }
 }
 
-int isValidInstruction(char *line)
-{
-    char *instructionName = (char *)malloc(MAX_LINE_LENGTH * sizeof(char));
-    char *operands = (char *)malloc(MAX_LINE_LENGTH * sizeof(char));
-    int i;
 
-    printf("TEST --> Validating instruction\n");
-
-    /* Parse the line to extract the instruction name and operands */
-    sscanf(line, "%s %[^\n]", instructionName, operands);
-
-    printf("TEST --> Instruction name: %s\n", instructionName);
-    printf("TEST --> Operands: %s\n", operands);
-
-    /* Check if the instruction name is valid */
-    for (i = 0; i < CMD_NUM; i++)
-    {
-        if (strcmp(instructionName, commandTable[i].cmdName) == 0)
-        {
-            printf("TEST --> Instruction found: %s\n", commandTable[i].cmdName);
-            free(instructionName);
-            free(operands);
-            return 1;
-        }
-    }
-    free(instructionName);
-    free(operands);
-    return 0;
-}
-
+/**
+ * Implements the decodeOperands function declared in first_pass.h.
+ */
 int decodeOperands(char *operands[])
 {
-    Word word;
-    int value;
-    int totalMemoryLines = 0;
-    int isSrcReg = 0;
-    int i;
-    char *symbolName, *start, *end;
-    char index[256];
-    char *copy;
-    Addressing addrMethod;
+    Word word; /* Temporary storage for operand values */
+    int value; /* Numeric value of an operand */
+    int totalMemoryLines = 0; /* Counter for memory lines consumed */
+    int isSrcReg = 0; /* Flag to handle source register in dual operand instructions */
+    int i; /* Loop counter */
+    char *symbolName, *start, *end; /* Pointers for handling indexed addressing */
+    char index[256]; /* Buffer for index in indexed addressing */
+    char *copy; /* Copy of operand for manipulation */
+    Addressing addrMethod; /* Addressing method of current operand */
 
     for (i = 0; i < MAX_OPERANDS; i++)
     {
         if (operands[i] == NULL)
         {
-            continue;
+            continue; /* Skip processing if the operand is NULL */
         }
-        addrMethod = getAddressingMethod(operands[i]);
+        addrMethod = getAddressingMethod(operands[i]); /* Determine the addressing method */
         switch (addrMethod)
         {
         case IMMEDIATE:
+            /* Immediate value may be a numeric or a symbol value */
             if (lookupSymbol(operands[i] + 1) != NULL)
             {
                 value = lookupSymbol(operands[i] + 1)->value;
@@ -849,37 +863,37 @@ int decodeOperands(char *operands[])
             {
                 value = atoi(operands[i] + 1);
             }
-            memset(&word, 0, sizeof(word));
+            memset(&word, 0, sizeof(word)); /* Clear the word struct */
 
-            setImmediateValue(&word, value, 0);
+            setImmediateValue(&word, value, 0); /* Set the immediate value */
 
             printf("Operand %d (%s) uses Immediate addressing IC = %d\n", i, operands[i], IC);
             printf("TEST --> Encoded Word: ");
-            printWordAsBinary(word);
+            printWordAsBinary(word); /* Output the binary format of the word */
 
-            memory[IC] = atoi(operands[i] + 1);
+            memory[IC] = atoi(operands[i] + 1); /* Store value directly in memory */
 
             memoryLines[IC].word->value = word.value;
             memoryLines[IC].type = IMMEDIATE_ADDRESSING;
             memoryLines[IC].value = value;
-            IC++;
+            IC++; /* Increment instruction counter */
 
             printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
 
-            totalMemoryLines += 1;
+            totalMemoryLines += 1; /* Increment total memory lines used */
             break;
         case DIRECT:
             printf("Operand %d (%s) uses Direct addressing IC = %d\n", i, operands[i], IC);
-            memory[IC] = -1;
+            memory[IC] = -1; /* Placeholder for future linking */
             memoryLines[IC].type = IMMEDIATE_ADDRESSING;
             memoryLines[IC].value = -1;
-            IC++;
+            IC++; /* Increment instruction counter */
 
             printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);
-            totalMemoryLines += 1;
+            totalMemoryLines += 1; /* Increment total memory lines used */
             break;
         case INDEX:
-
+            /* Handle indexed addressing */
             copy = strdup(operands[i]);
             symbolName = strtok(copy, "[");
             start = strchr(operands[i], '[');
@@ -889,19 +903,19 @@ int decodeOperands(char *operands[])
             printf("Operand %d (%s) uses Index addressing IC = %d\n", i, operands[i], IC);
             if (lookupSymbol(symbolName) == NULL)
             {
-                memory[IC] = -1;
+                memory[IC] = -1; /* Placeholder for future linking */
                 memoryLines[IC].type = INDEX_ADDRESSING;
                 memoryLines[IC].value = -1;
-                IC++;
+                IC++; /* Increment instruction counter */
             }
             else
             {
                 memory[IC] = lookupSymbol(symbolName)->value;
                 memoryLines[IC].type = INDEX_ADDRESSING;
                 memoryLines[IC].value = lookupSymbol(symbolName)->value;
-                IC++;
+                IC++; /* Increment instruction counter */
             }
-
+            /* Handle the numeric index within brackets */
             if (start && end && (end > start))
             {
                 int length = end - start - 1;
@@ -1014,29 +1028,34 @@ int decodeOperands(char *operands[])
     return totalMemoryLines;
 }
 
+
+/**
+ * Implements the getAddressingMethod function declared in first_pass.h.
+ */
 Addressing getAddressingMethod(char *operand)
 {
+    /* Check for immediate addressing mode signified by a '#' */
     if (operand[0] == '#')
     {
         printf("TEST --> Immediate\n");
-        return IMMEDIATE;
+        return IMMEDIATE; /* Return immediate addressing type */
     }
+    /* Check for index addressing mode signified by presence of '[' and ']' */
     if (strchr(operand, '[') && strchr(operand, ']'))
     {
         printf("TEST --> Index\n");
-        return INDEX;
+        return INDEX; /* Return index addressing type */
     }
+    /* Check for register addressing mode signified by 'r' followed by a digit */
     if (operand[0] == 'r' && isdigit(operand[1]))
     {
         printf("TEST --> Register\n");
-        return REGISTER;
+        return REGISTER; /* Return register addressing type */
     }
+    /* If none of the above, assume direct addressing */
     printf("TEST --> Direct\n");
-    return DIRECT;
+    return DIRECT; /* Return direct addressing type */
 }
 
-/* end LINE_INSTRUCTION code */
+/* ############################### end LINE_INSTRUCTION code ############################### */
 
-/* start LINE_DIRECTIVE code */
-
-/* end LINE_DIRECTIVE code */
