@@ -138,78 +138,96 @@ void processDataDirective(char *line);
 
 
 
+/* ########## LINE_INSTRUCTION ########## */
+
+
 
 
 /**
- * Processes an instruction line.
+ * Determines if a given line from an assembly source code represents an instruction.
+ * This function compares the first word of the line against a predefined table of command names to check for a match.
  *
- * @param line The instruction line to process.
+ * @param line A character pointer to the line to be checked.
+ * @return An integer 1 if the line contains an instruction, otherwise 0.
+ */
+int isInstruction(char *line);
+
+
+
+/**
+ * Processes a line that contains an assembly instruction.
+ * This function parses the instruction, allocates memory for its components, and stores them appropriately.
+ *
+ * @param line A character pointer to the instruction line to be processed.
  */
 void processInstruction(char *line);
 
 
 /**
- * Checks if a line represents an instruction.
+ * Validates whether a line from the assembly source code represents a syntactically correct instruction.
+ * This function extracts the instruction name and its operands from the line and checks if the instruction name exists in the command table.
  *
- * @param line The line to check.
- * @return 1 if the line represents an instruction, otherwise 0.
- */
-int isInstruction(char *line);
-
-
-/**
- * Checks if an instruction line is valid.
- *
- * @param line The line to check.
- * @return 1 if the instruction line is valid, otherwise 0.
+ * @param line A character pointer to the line to be checked.
+ * @return An integer 1 if the instruction is valid, otherwise 0.
  */
 int isValidInstruction(char *line);
 
-
 /**
- * Decodes the operands of an instruction line.
- *
- * @param operands The array to store the decoded operands.
- * @return The number of operands decoded.
- */
-int decodeOperands(char *operands[]);
-
-
-/**
- * Parses an instruction line and stores the parsed information in an Instruction struct.
- *
- * @param line The instruction line to parse.
- * @param instruction Pointer to the Instruction struct to store the parsed information.
- * @return Pointer to the parsed Instruction struct.
- */
-Instruction *parseInstruction(char *line, Instruction *instruction);
-
-
-/**
- * Determines the addressing method of an operand.
- *
- * @param operand The operand to analyze.
- * @return The addressing method of the operand.
- */
-Addressing getAddressingMethod(char *operand);
-
-
-/**
- * Checks if an addressing mode is valid.
- *
- * @param mode The addressing mode to check.
- * @param allowedModes Array of allowed addressing modes.
- * @return 1 if the addressing mode is valid, otherwise 0.
- */
-int isValidAddressingMode(int mode, int allowedModes[]);
-
-
-/**
- * Sets up the first word of an instruction.
+ * Initializes the first word of an instruction based on its opcode and addressing modes.
+ * This function sets up the opcode, ARE (Absolute, Relocatable, External), and addressing modes for source and destination operands.
  *
  * @param firstWord Pointer to the Word struct representing the first word of the instruction.
  * @param instruction Pointer to the Instruction struct containing the instruction information.
  */
 void setupFirstInstructionWord(Word *firstWord, Instruction *instruction);
+
+
+/**
+ * Determines if a given addressing mode is valid based on an array of allowed modes.
+ * This function checks if the specified mode is among the allowed addressing modes.
+ *
+ * @param mode The addressing mode to validate.
+ * @param allowedModes An array of integers representing the allowed addressing modes.
+ * @return An integer 1 if the addressing mode is valid, otherwise 0.
+ */
+int isValidAddressingMode(int mode, int allowedModes[]);
+
+
+/**
+ * Parses an instruction line into its component parts and populates an Instruction struct with the parsed data.
+ * The function extracts the instruction name, opcode, and operands from the line and verifies the instruction's validity.
+ *
+ * @param line The instruction line to parse.
+ * @param instruction Pointer to the Instruction struct to store the parsed information.
+ * @return Pointer to the Instruction struct if parsing is successful, otherwise NULL.
+ */
+Instruction *parseInstruction(char *line, Instruction *instruction);
+
+
+
+/**
+ * Decodes the operands of an instruction line based on their addressing modes.
+ * It handles different addressing modes such as immediate, direct, index, and register, and updates the instruction counter.
+ *
+ * @param operands The array of operand strings to decode.
+ * @return The number of memory lines used by the decoded operands.
+ */
+int decodeOperands(char *operands[]);
+
+
+/**
+ * Determines the addressing method used by an operand in assembly language instruction.
+ * This function identifies whether the operand uses immediate, index, register, or direct addressing.
+ *
+ * @param operand The operand string to analyze.
+ * @return The addressing method as an enumeration value of type Addressing.
+ */
+Addressing getAddressingMethod(char *operand);
+
+
+
+
+
+
 
 #endif /* FIRSTPASS_H */
