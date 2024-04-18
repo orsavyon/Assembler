@@ -159,26 +159,30 @@ void firstPass(FILE *fp)
     }
 }
 
-/* start HELPERS code */
+/* ############################### start HELPERS code ############################### */
 
+/**
+ * Implements the getFirstWord function declared in first_pass.h.
+ */
 char *getFirstWord(const char *line)
 {
-    static char firstWord[MAX_LINE_LENGTH];
-    int i = 0;
-
+    static char firstWord[MAX_LINE_LENGTH]; /* Static buffer to hold the first word */
+    int i = 0; /* Index for placing characters into firstWord */
+    
+    /* Skip leading whitespace */
     while (isspace((unsigned char)*line))
     {
         line++;
     }
-
+    /* Capture the first word until a space or string end is encountered */
     while (*line && !isspace((unsigned char)*line) && i < MAX_LINE_LENGTH - 1)
     {
         firstWord[i++] = *line++;
     }
 
-    firstWord[i] = '\0';
-    printf("TEST --> First word: %s\n", firstWord);
-    return firstWord;
+    firstWord[i] = '\0'; /* Null-terminate the extracted word */
+    printf("TEST --> First word: %s\n", firstWord); /* Output the first word for debugging */
+    return firstWord; /* Return the static buffer containing the first word */
 }
 
 
@@ -219,148 +223,175 @@ LineType getLineType(char *line)
     return INVALID_LINE;
 }
 
+/**
+ * Implements the isSymbol function declared in first_pass.h.
+ */
 int isSymbol(char *line)
 {
     int i;
     printf("TEST --> Checking if symbol\n");
+    /* Iterate through the line to check for ':' followed by a space */
     for (i = 0; i < strlen(line); i++)
     {
         if (line[i] == ':' && line[i + 1] == ' ')
         {
             printf("TEST --> Symbol found\n");
-            return 1;
+            return 1; /* Return 1 if symbol pattern is detected */
         }
     }
-    return 0;
+    return 0; /* Return 0 if no symbol pattern is detected */
 }
-/* end HELPERS code */
+
+/* ############################### end HELPERS code ############################### */
 
 
 
-/* ------ start LINE_DEFINITION code ------*/
+/* ############################### start LINE_DEFINITION code ############################### */
 
+
+/**
+ * Implements the isConstantDefinition function declared in first_pass.h.
+ */
 int isConstantDefinition(char *line)
 {
     printf("TEST --> Checking if constant definition\n");
-    return strcmp(getFirstWord(line), ".define") == 0;
+    
+    /* Compare the first word of the line to ".define" to determine if it is a constant definition */
+    return strcmp(getFirstWord(line), ".define") == 0; /* Return 1 if it matches, otherwise 0 */
 }
+
+
+/**
+ * Implements the processDefinition function declared in first_pass.h.
+ */
 
 void processDefinition(char *line)
 {
     if (isValidConstantDefinition(line))
     {
+        /* Allocate memory for constant name with size based on MAX_LINE_LENGTH */
         char *constantName = (char *)malloc(MAX_LINE_LENGTH * sizeof(char));
         int value;
 
+        /* Parse the line to extract constant name and its integer value */
         sscanf(line, ".define %[^=]=%d", constantName, &value);
-        trimLine(constantName);
-        addSymbol(constantName, mdefine, value);
+        trimLine(constantName); /* Remove any leading or trailing spaces from constant name */
+        addSymbol(constantName, mdefine, value); /* Add the constant name and value to the symbol table */
         printf("TEST --> Valid constant definition\n");
     }
     else
     {
+        /* Handle the error if the definition line is invalid */
         handleError("TEST --> Invalid constant definition", lineNum, line);
     }
 }
 
+
+/**
+ * Implements the isValidConstantDefinition function declared in first_pass.h.
+ */
 int isValidConstantDefinition(char *line)
 {
+    /* Allocate memory for potential constant name */
     char *constantName = (char *)malloc(MAX_LINE_LENGTH * sizeof(char));
     int value;
 
     printf("TEST --> Validating constant definition\n");
-    /* Parse the line to extract the constant name and value */
+    /* Check if the line contains an equal sign which is crucial for valid definition syntax */
     if (strstr(line, "=") == NULL)
     {
         handleError("TEST --> Invalid constant definition: Missing equal sign", lineNum, line);
         return 0;
     }
-
+    /* Extract the constant name and its value from the line */
     sscanf(line, ".define %[^=]=%d", constantName, &value);
-    trimLine(constantName);
+    trimLine(constantName); /* Remove any extraneous whitespace from the constant name */
     printf("TEST --> Constant name: '%s'\n", constantName);
     printf("TEST --> Value: %d\n", value);
 
-    /* Trim leading and trailing white spaces from the constant name and value */
-    /*trim(constantName);*/
-    /*trimValue(line);*/
-
-    /* Check if the constant name is already defined */
+    /* Check if the constant name already exists in the symbol table */
     if (lookupSymbol(constantName) != NULL)
     {
         handleError("TEST --> Symbol is already defined", lineNum, line);
-        free(constantName);
+        free(constantName); /* Free the allocated memory as the definition is invalid */
         return 0;
     }
 
-    /* Convert the value to an integer */
-
-    /* Check if the value is within the range of a 12-bit integer */
+    /* Ensure the value is within the valid range for 12-bit integers */
     if (value < -2048 || value > 2047)
     {
         handleError("TEST --> Value is out of range", lineNum, line);
-        free(constantName);
+        free(constantName); /* Free the allocated memory as the value is out of range */
         return 0;
     }
 
-    free(constantName);
+    free(constantName); /* Free the allocated memory after validation */
 
-    return 1;
+    return 1; /* Return success if all checks pass */
 }
 
-/* ------ end LINE_DEFINITION code ------ */
+/* ############################### end LINE_DEFINITION code ############################### */
 
-/* ------ start LINE_DIRECTIVE code ------ */
+/* ############################### start LINE_DIRECTIVE code ############################### */
 
+
+/**
+ * Implements the processDirective function declared in first_pass.h.
+ */
 void processDirective(char *line)
 {
+    * Switch on the type of directive determined by getDirectiveType function */
     switch (getDirectiveType(line))
     {
     case DATA_DIRECTIVE:
         printf("TEST --> Data directive\n");
-        processDataDirective(line);
-
+        processDataDirective(line); /* Call to process data directive */
+        /* ! Refactor */
         break;
     case STRING_DIRECTIVE:
         printf("TEST --> String directive\n");
-        processDataDirective(line);
-
+        processDataDirective(line); /* Call to process string directive */
+        /* ! Refactor */
         break;
     case ENTRY_DIRECTIVE:
         printf("TEST --> Entry directive\n");
         break;
     case EXTERN_DIRECTIVE:
-        if (symbolFlag == 1)
+        if (symbolFlag == 1) /* Check condition based on symbolFlag */
         {
             break;
         }
         else
         {
             printf("TEST --> Extern directive\n");
-            processExternDirective(line);
+            processExternDirective(line); /* Call to process extern directive */
             break;
         }
     case INVALID_DIRECTIVE:
-        handleError("TEST --> Invalid directive", lineNum, line);
+        handleError("TEST --> Invalid directive", lineNum, line); /* Handle invalid directive */
         break;
     }
 }
 
+
+/**
+ * Implements the processDataDirective function declared in first_pass.h.
+ */
 void processDataDirective(char *line)
 {
-    char *token;
+    char *token; /* Token for parsing the data elements */
     printf("TEST --> Processing data directive\n\t----Line: %s\n", line);
-
+     /* Check if the line starts with '.data' directive */
     if (strncmp(line, ".data", 5) == 0)
     {
-        token = strtok(line + 6, ",");
+        token = strtok(line + 6, ","); /* Start tokenizing the line after the directive */
         while (token != NULL)
         {
-            Symbol *symbol;
+            Symbol *symbol; /* Pointer to a symbol structure */
             printf("TEST --> Token: %s\n", token);
-            trimLine(token);
+            trimLine(token); /* Trim whitespace around the token */
 
-            symbol = lookupSymbol(token);
+            symbol = lookupSymbol(token); /* Check if the token is a known symbol */
             if (symbol)
             {
                 printf("TEST --> Symbol Found: %s\n", symbol->symbolName);
@@ -369,7 +400,7 @@ void processDataDirective(char *line)
             {
                 printf("TEST --> Symbol Not Found: %s\n", token);
             }
-
+            /* If the token is a defined symbol, store its value in memory */
             if (symbol && symbol->symbolType == mdefine)
             {
                 printf("TEST --> Symbol: %s\n", symbol->symbolName);
@@ -378,8 +409,8 @@ void processDataDirective(char *line)
 
                 memoryLines[DC + IC].value = computeFourteenBitValue(symbol->value);
                 DC++;
-            }
-            else if (isdigit(token[0]) || token[0] == '-' || token[0] == '+')
+            } 
+            else if (isdigit(token[0]) || token[0] == '-' || token[0] == '+') /* If the token is a numeric value, store it directly */
             {
                 printf("TEST --> DC: %d\n", DC);
 
@@ -389,21 +420,21 @@ void processDataDirective(char *line)
 
                 DC++;
             }
-            else
+            else /* Handle the error case where the token is neither a defined symbol nor a valid number */
             {
                 printf("Error: Undefined symbol or invalid number in .data directive: %s\n", token);
             }
-            token = strtok(NULL, ",");
+            token = strtok(NULL, ","); /* Continue to the next token */
         }
     }
-    else if (strncmp(line, ".string", 7) == 0)
+    else if (strncmp(line, ".string", 7) == 0) /* Handle the '.string' directive */
     {
 
-        char *start = strchr(line, '\"');
+        char *start = strchr(line, '\"'); /* Find the starting quote of the string */
         char *end = NULL;
         if (!start)
         {
-            start = strstr(line, "“");
+            start = strstr(line, "“"); /* Handle alternative quote character */
             if (start)
             {
                 start += 3;
@@ -416,7 +447,7 @@ void processDataDirective(char *line)
 
         if (start)
         {
-            end = strchr(start, '\"');
+            end = strchr(start, '\"'); /* Find the ending quote */
             if (!end)
             {
                 end = strstr(start, "”");
@@ -425,12 +456,12 @@ void processDataDirective(char *line)
 
         printf("TEST --> Processing string directive\n");
 
-        if (start && end && start < end)
+        if (start && end && start < end) /* If valid string boundaries are found, process the string */
         {
             char *c;
             printf("TEST --> String: %.*s\n", (int)(end - start), start);
 
-            for (c = start; c < end; c++)
+            for (c = start; c < end; c++) /* Store each character of the string in memory */
             {
                 printf("TEST --> Char: %c\n", *c);
                 printf("TEST --> DC: %d\n", DC);
@@ -446,70 +477,89 @@ void processDataDirective(char *line)
             memoryLines[DC + IC].value = computeFourteenBitValue('\0');
             DC++;
         }
-        else
+        else /* Handle invalid string directive */
         {
             handleError("Invalid string directive", lineNum, line);
         }
     }
 }
 
+
+/**
+ * Implements the getDirectiveType function declared in first_pass.h.
+ */
 DirectiveType getDirectiveType(char *line)
 {
-    char *directiveName;
+    char *directiveName; /* Pointer to store the first word from the line */
 
-    directiveName = getFirstWord(line);
+    directiveName = getFirstWord(line); /* Retrieve the first word from the line */
 
     printf("TEST --> Checking directive type: %s\n", directiveName);
+
+    /* Check for '.data' directive and return corresponding type */
     if (strcmp(directiveName, ".data") == 0)
     {
         printf("TEST --> Data directive: %s found in line %d <--- Second TEST\n", directiveName, lineNum);
         return DATA_DIRECTIVE;
     }
+    /* Check for '.string' directive and return corresponding type */
     if (strcmp(directiveName, ".string") == 0)
     {
         return STRING_DIRECTIVE;
     }
+    /* Check for '.entry' directive and return corresponding type */
     if (strcmp(directiveName, ".entry") == 0)
     {
         return ENTRY_DIRECTIVE;
     }
+    /* Check for '.extern' directive and return corresponding type */
     if (strcmp(directiveName, ".extern") == 0)
     {
         return EXTERN_DIRECTIVE;
     }
+    /* If none of the known directives match, return invalid directive type */
     else
     {
         return INVALID_DIRECTIVE;
     }
 }
 
+/**
+ * Implements the processExternDirective function declared in first_pass.h.
+ */
 void processExternDirective(char *line)
 {
 
-    char *token;
-    token = strtok(line + 7, ",");
+    char *token; /* Token for parsing symbols from the directive */
+    token = strtok(line + 7, ","); /* Begin tokenizing after the directive keyword */
     printf("TEST --> Processing extern directive\n");
     printf("TEST --> Line exten directive: %s\n", line);
+
+    /* Iterate through tokens representing symbols */
     while (token != NULL)
     {
-        Symbol *symbol;
+        Symbol *symbol; /* Pointer to a symbol structure */
         printf("TEST --> Token: %s\n", token);
-        trimLine(token);
+        trimLine(token); /* Trim whitespace around the token */
 
-        symbol = lookupSymbol(token);
+        symbol = lookupSymbol(token); /* Check if the symbol is already in the table */
         if (symbol)
         {
-            printf("TEST --> Symbol Found: %s\n", symbol->symbolName);
+            printf("TEST --> Symbol Found: %s\n", symbol->symbolName); /* Existing symbol found */
         }
         else
         {
-            printf("TEST --> Symbol Not Found: %s\n", token);
+            printf("TEST --> Symbol Not Found: %s\n", token); /* New external symbol, add it to the table */
             addSymbol(token, external, 0);
         }
-        token = strtok(NULL, ",");
+        token = strtok(NULL, ","); /* Continue to the next token */
     }
 }
-/* ------ end LINE_DIRECTIVE code  */
+/* ############################### end LINE_DIRECTIVE code ############################### */
+
+
+
+
 
 /* ------ start LINE_INSTRUCTION code ------ */
 /*
