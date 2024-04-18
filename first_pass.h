@@ -19,6 +19,37 @@ typedef enum
     INVALID_LINE      /* Invalid line type */
 } LineType;
 
+/**
+ * Performs the first pass of the assembler.
+ *
+ * @param fp Pointer to the source file.
+ */
+void firstPass(FILE *fp);
+
+
+/* ########## HELPERS ########## */
+
+/**
+ * Extracts and returns the first word from a given line of text.
+ * This function skips any leading whitespace and captures the first sequence of non-whitespace characters.
+ *
+ * @param line A constant character pointer to the line from which the first word is to be extracted.
+ * @return A pointer to a static buffer containing the first word of the line.
+ */
+char *getFirstWord(const char *line);
+
+
+
+/**
+ * Determines if a line of assembly code contains a symbol declaration.
+ * A symbol in assembly is typically indicated by a colon followed by a space.
+ *
+ * @param line A character pointer to the line to be checked for a symbol.
+ * @return An integer 1 if a symbol is present, otherwise 0.
+ */
+int isSymbol(char *line);
+
+
 
 /**
  * Determines the type of a line.
@@ -29,38 +60,84 @@ typedef enum
 LineType getLineType(char *line);
 
 
-/**
- * Performs the first pass of the assembler.
- *
- * @param fp Pointer to the source file.
- */
-void firstPass(FILE *fp);
 
 
+/* ########## LINE_DEFINITION ########## */
+
 /**
- * Processes a definition line.
+ * Processes a definition line in assembly language input.
+ * This function parses a definition line that specifies a constant,
+ * and if valid, adds it to the symbol table with its associated value.
  *
- * @param line The definition line to process.
+ * @param line A character pointer to the definition line to process.
  */
 void processDefinition(char *line);
 
 
 /**
- * Checks if a line defines a constant.
+ * Determines if the provided line from the assembly source code defines a constant.
+ * This function checks if the line starts with the ".define" keyword, which indicates a constant definition.
  *
- * @param line The line to check.
- * @return 1 if the line defines a constant, otherwise 0.
+ * @param line A character pointer to the string to be checked.
+ * @return An integer 1 if the line defines a constant, otherwise 0.
  */
 int isConstantDefinition(char *line);
 
 
 /**
- * Checks if a constant definition is valid.
+ * Validates whether a given line from the assembly source represents a valid constant definition.
+ * This function checks the syntax and uniqueness of a constant definition within the assembly source.
+ * It also validates that the defined value is within the permissible range for constants.
  *
- * @param line The line to check.
- * @return 1 if the constant definition is valid, otherwise 0.
+ * @param line A character pointer to the string containing the potential constant definition.
+ * @return An integer 1 if the constant definition is valid, otherwise 0.
  */
 int isValidConstantDefinition(char *line);
+
+
+
+
+/* ########## LINE_DIRECTIVE ########## */
+
+
+/**
+ * Identifies the type of directive based on the first word of a given line from an assembly source.
+ * This function determines the directive type such as data, string, entry, extern, or invalid.
+ *
+ * @param line A character pointer to the directive line to identify.
+ * @return An enumeration value of type DirectiveType corresponding to the directive found.
+ */
+DirectiveType getDirectiveType(char *line);
+
+
+/**
+ * Processes a directive line from an assembly language input.
+ * Based on the type of directive identified by `getDirectiveType`, it executes the relevant processing function or handles errors.
+ *
+ * @param line A character pointer to the directive line to be processed.
+ */
+void processDirective(char *line);
+
+
+/**
+ * Processes a line designated as an extern directive in assembly source code.
+ * This function tokenizes the line to extract and handle each symbol declared as external.
+ *
+ * @param line A character pointer to the extern directive line to be processed.
+ */
+
+void processExternDirective(char *line);
+
+/**
+ * Processes lines containing data or string directives in an assembly program.
+ * This function parses the line to extract and handle numerical data or string literals based on the directive type.
+ *
+ * @param line The line containing the data directive to process.
+ */
+void processDataDirective(char *line);
+
+
+
 
 
 /**
@@ -88,57 +165,6 @@ int isInstruction(char *line);
  */
 int isValidInstruction(char *line);
 
-
-/**
- * Retrieves the first word from a line.
- *
- * @param line The line to extract the first word from.
- * @return The first word of the line.
- */
-char *getFirstWord(const char *line);
-
-
-
-/**
- * Checks if a line contains a symbol.
- *
- * @param line The line to check.
- * @return 1 if the line contains a symbol, otherwise 0.
- */
-int isSymbol(char *line);
-
-
-/**
- * Determines the type of a directive.
- *
- * @param line The directive line.
- * @return The type of the directive.
- */
-DirectiveType getDirectiveType(char *line);
-
-
-/**
- * Processes a directive line.
- *
- * @param line The directive line to process.
- */
-void processDirective(char *line);
-
-
-/**
- * Processes an extern directive line.
- *
- * @param line The extern directive line to process.
- */
-
-void processExternDirective(char *line);
-
-/**
- * Processes a data directive line.
- *
- * @param line The data directive line to process.
- */
-void processDataDirective(char *line);
 
 /**
  * Decodes the operands of an instruction line.
