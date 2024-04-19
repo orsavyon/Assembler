@@ -869,7 +869,7 @@ int decodeOperands(char *operands[])
         case DIRECT:
             printf("Operand %d (%s) uses Direct addressing IC = %d\n", i, operands[i], IC);
             memory[IC] = -1; /* Placeholder for future linking */
-            memoryLines[IC].type = IMMEDIATE_ADDRESSING;
+            memoryLines[IC].type = DIRECT_ADDRESSING;
             memoryLines[IC].needEncoding = 1;
             memoryLines[IC].symbol = strdup(operands[i]);
             memoryLines[IC].value = -1;
@@ -899,7 +899,7 @@ int decodeOperands(char *operands[])
             else
             {
                 memory[IC] = lookupSymbol(symbolName)->value;
-                memoryLines[IC].type = INDEX_ADDRESSING;
+                memoryLines[IC].type = INDEX_ADDRESSING_VALUE;
                 memoryLines[IC].value = lookupSymbol(symbolName)->value;
                 IC++; /* Increment instruction counter */
             }
@@ -922,7 +922,7 @@ int decodeOperands(char *operands[])
 
                         memory[IC] = value;
                         memoryLines[IC].word->value = word.value;
-                        memoryLines[IC].type = INDEX_ADDRESSING;
+                        memoryLines[IC].type = INDEX_ADDRESSING_VALUE;
                         memoryLines[IC].value = value;
                         IC++;
                     }
@@ -944,7 +944,7 @@ int decodeOperands(char *operands[])
                         memory[IC] = value;
 
                         memoryLines[IC].word->value = word.value;
-                        memoryLines[IC].type = INDEX_ADDRESSING;
+                        memoryLines[IC].type = INDEX_ADDRESSING_VALUE;
                         memoryLines[IC].value = value;
                         IC++;
                     }

@@ -403,6 +403,10 @@ void printMemoryLines()
         case INDEX_ADDRESSING:
             printf("MemoryLines[%d] INDEX: ", i);
 
+            printAsBinary(memoryLines[i].value);
+            break;
+        case INDEX_ADDRESSING_VALUE:
+            printf("MemoryLines[%d] INDEX VALUE: ", i);
             printWordAsBinary(*memoryLines[i].word);
             break;
         case REGISTER_ADDRESSING:
@@ -411,7 +415,7 @@ void printMemoryLines()
             break;
         case DIRECT_ADDRESSING:
             printf("MemoryLines[%d] DIRECT: ", i);
-            printWordAsBinary(*memoryLines[i].word);
+            printAsBinary(memoryLines[i].value);
             break;
         case INSTRUCTION_ADDRESSING:
             printf("MemoryLines[%d] INSTRUCTION: ", i);
