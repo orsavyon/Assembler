@@ -26,7 +26,6 @@ typedef enum
  */
 void firstPass(FILE *fp);
 
-
 /* ########## HELPERS ########## */
 
 /**
@@ -38,8 +37,6 @@ void firstPass(FILE *fp);
  */
 char *getFirstWord(const char *line);
 
-
-
 /**
  * Determines if a line of assembly code contains a symbol declaration.
  * A symbol in assembly is typically indicated by a colon followed by a space.
@@ -49,8 +46,6 @@ char *getFirstWord(const char *line);
  */
 int isSymbol(char *line);
 
-
-
 /**
  * Determines the type of a line.
  *
@@ -58,9 +53,6 @@ int isSymbol(char *line);
  * @return The type of the line.
  */
 LineType getLineType(char *line);
-
-
-
 
 /* ########## LINE_DEFINITION ########## */
 
@@ -73,7 +65,6 @@ LineType getLineType(char *line);
  */
 void processDefinition(char *line);
 
-
 /**
  * Determines if the provided line from the assembly source code defines a constant.
  * This function checks if the line starts with the ".define" keyword, which indicates a constant definition.
@@ -82,7 +73,6 @@ void processDefinition(char *line);
  * @return An integer 1 if the line defines a constant, otherwise 0.
  */
 int isConstantDefinition(char *line);
-
 
 /**
  * Validates whether a given line from the assembly source represents a valid constant definition.
@@ -94,11 +84,7 @@ int isConstantDefinition(char *line);
  */
 int isValidConstantDefinition(char *line);
 
-
-
-
 /* ########## LINE_DIRECTIVE ########## */
-
 
 /**
  * Identifies the type of directive based on the first word of a given line from an assembly source.
@@ -109,7 +95,6 @@ int isValidConstantDefinition(char *line);
  */
 DirectiveType getDirectiveType(char *line);
 
-
 /**
  * Processes a directive line from an assembly language input.
  * Based on the type of directive identified by `getDirectiveType`, it executes the relevant processing function or handles errors.
@@ -117,7 +102,6 @@ DirectiveType getDirectiveType(char *line);
  * @param line A character pointer to the directive line to be processed.
  */
 void processDirective(char *line);
-
 
 /**
  * Processes a line designated as an extern directive in assembly source code.
@@ -136,12 +120,7 @@ void processExternDirective(char *line);
  */
 void processDataDirective(char *line);
 
-
-
 /* ########## LINE_INSTRUCTION ########## */
-
-
-
 
 /**
  * Determines if a given line from an assembly source code represents an instruction.
@@ -152,8 +131,6 @@ void processDataDirective(char *line);
  */
 int isInstruction(char *line);
 
-
-
 /**
  * Processes a line that contains an assembly instruction.
  * This function parses the instruction, allocates memory for its components, and stores them appropriately.
@@ -161,7 +138,6 @@ int isInstruction(char *line);
  * @param line A character pointer to the instruction line to be processed.
  */
 void processInstruction(char *line);
-
 
 /**
  * Validates whether a line from the assembly source code represents a syntactically correct instruction.
@@ -181,7 +157,6 @@ int isValidInstruction(char *line);
  */
 void setupFirstInstructionWord(Word *firstWord, Instruction *instruction);
 
-
 /**
  * Determines if a given addressing mode is valid based on an array of allowed modes.
  * This function checks if the specified mode is among the allowed addressing modes.
@@ -191,7 +166,6 @@ void setupFirstInstructionWord(Word *firstWord, Instruction *instruction);
  * @return An integer 1 if the addressing mode is valid, otherwise 0.
  */
 int isValidAddressingMode(int mode, int allowedModes[]);
-
 
 /**
  * Parses an instruction line into its component parts and populates an Instruction struct with the parsed data.
@@ -203,8 +177,6 @@ int isValidAddressingMode(int mode, int allowedModes[]);
  */
 Instruction *parseInstruction(char *line, Instruction *instruction);
 
-
-
 /**
  * Decodes the operands of an instruction line based on their addressing modes.
  * It handles different addressing modes such as immediate, direct, index, and register, and updates the instruction counter.
@@ -214,7 +186,6 @@ Instruction *parseInstruction(char *line, Instruction *instruction);
  */
 int decodeOperands(char *operands[]);
 
-
 /**
  * Determines the addressing method used by an operand in assembly language instruction.
  * This function identifies whether the operand uses immediate, index, register, or direct addressing.
@@ -223,11 +194,5 @@ int decodeOperands(char *operands[]);
  * @return The addressing method as an enumeration value of type Addressing.
  */
 Addressing getAddressingMethod(char *operand);
-
-
-
-
-
-
 
 #endif /* FIRSTPASS_H */

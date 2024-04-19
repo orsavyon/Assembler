@@ -93,6 +93,7 @@ typedef struct MemoryEntry
 {
     Word *word;
     AddressingMethod type;
+    int needEncoding;
     int value;
     char *symbol;
     unsigned int address;
@@ -181,6 +182,8 @@ void addSymbol(const char *name, SymbolType type, unsigned int value);
  * Prints the contents of the symbol table.
  */
 void printSymbolTable();
+
+void updateSymbolValues();
 
 /**
  * Initializes the translation table with NULL values.

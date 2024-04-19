@@ -12,7 +12,7 @@ macro_parser.o: macro_parser.c macro_parser.h utils.h
 first_pass.o: first_pass.c first_pass.h utils.h data.h
 	gcc -ansi -Wall -pedantic -c first_pass.c -o first_pass.o
 
-second_pass.o: second_pass.c second_pass.h utils.h data.h
+second_pass.o: second_pass.c second_pass.h utils.h data.h first_pass.h
 	gcc -ansi -Wall -pedantic -c second_pass.c -o second_pass.o
 
 utils.o: utils.c utils.h

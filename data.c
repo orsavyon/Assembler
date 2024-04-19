@@ -295,6 +295,38 @@ void addSymbol(const char *name, SymbolType type, unsigned int value)
     }
 }
 
+void updateSymbolType(char *symbolName, int type)
+{
+    Symbol *sym;
+    sym = lookupSymbol(symbolName);
+    if (sym != NULL)
+    {
+        sym->symbolType = type;
+    }
+    else
+    {
+        fprintf(stderr, "Symbol '%s' not found\n", symbolName);
+    }
+}
+
+void updateSymbolValues()
+{
+    int i;
+    Symbol *sym;
+    for (i = 0; i < MAX_SYMBOLS; i++)
+    {
+        sym = symbolTable[i];
+        while (sym != NULL)
+        {
+            if (sym->symbolType == data)
+            {
+                sym->value += IC + 100;
+            }
+            sym = sym->next;
+        }
+    }
+}
+
 /* Print the contents of the symbol table */
 void printSymbolTable()
 {
@@ -370,6 +402,7 @@ void printMemoryLines()
             break;
         case INDEX_ADDRESSING:
             printf("MemoryLines[%d] INDEX: ", i);
+
             printWordAsBinary(*memoryLines[i].word);
             break;
         case REGISTER_ADDRESSING:
