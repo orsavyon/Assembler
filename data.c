@@ -352,6 +352,19 @@ void printSymbolTable()
     }
 }
 
+int isReservedWord(char *word)
+{
+    int i;
+    for (i = 0; i < MAX_RESERVED_WORDS; i++)
+    {
+        if (strcmp(word, savedWords[i]) == 0)
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void printMemory()
 {
     int i;

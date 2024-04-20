@@ -49,12 +49,8 @@ void firstPass(FILE *fp)
         switch (getLineType(line))
         {
         case LINE_BLANK:
-            /* Ignore blank and comment lines */
-            /* ! Refactor */
-            break;
         case LINE_COMMENT:
             /* Ignore blank and comment lines */
-            /* ! Refactor */
             break;
 
         case LINE_DEFINITION:
@@ -137,7 +133,7 @@ void firstPass(FILE *fp)
             break;
 
         case INVALID_LINE:
-            handleError("TEST --> Invalid line", lineNum, line);
+            handleError("ERROR --> Invalid line", lineNum, line);
             break;
         default:
             break;
@@ -189,6 +185,7 @@ char *getFirstWord(const char *line)
 /* Determines the type of a line */
 LineType getLineType(char *line)
 {
+
     /* Check if the line is blank */
     if (line[0] == '\n' || line[0] == '\0' || isspace((unsigned char)line[0]))
     {
@@ -199,21 +196,30 @@ LineType getLineType(char *line)
     {
         return LINE_COMMENT;
     }
-    /* Check if the line defines a constant */
-    if (isConstantDefinition(line))
-    {
-        return LINE_DEFINITION;
-    }
-    /* Check if the line contains a symbol */
-    if (isSymbol(line))
-    {
-        return LINE_LABEL;
-    }
     /* Check if the line is a directive */
     if (line[0] == '.')
     {
-        return LINE_DIRECTIVE;
+        DirectiveType directiveType = getDirectiveType(line);
+        if (directiveType == INVALID_DIRECTIVE)
+        {
+            return INVALID_LINE;
+        }
+        if (directiveType == DEFINE_DIRECTIVE)
+        {
+            return LINE_DEFINITION;
+        }
+        else
+        {
+            return LINE_DIRECTIVE;
+        }
     }
+
+    /* Check if the line contains a symbol */
+    if (isLabel(line))
+    {
+        return LINE_LABEL;
+    }
+
     /* Check if the line represents an instruction */
     if (isInstruction(line))
     {
@@ -224,22 +230,56 @@ LineType getLineType(char *line)
 }
 
 /**
- * Implements the isSymbol function declared in first_pass.h.
+ * Implements the isLabel function declared in first_pass.h.
  */
-int isSymbol(char *line)
+int isLabel(char *line)
 {
-    int i;
-    printf("TEST --> Checking if symbol\n");
-    /* Iterate through the line to check for ':' followed by a space */
-    for (i = 0; i < strlen(line); i++)
+    char label[33]; /* Array to hold potential label */
+    int i = 0;
+    int errLabel = 0;
+    char *colonPos = strchr(line, ':');  /* Pointer to the colon character in the line */
+    errLabel = colonPos == NULL ? 0 : 1; /* Check if the colon character is present in the line */
+
+    /* Ensure the first character is alphabetic */
+    if (!isalpha((unsigned char)line[0]))
     {
-        if (line[i] == ':' && line[i + 1] == ' ')
+        if (errLabel == 1)
         {
-            printf("TEST --> Symbol found\n");
-            return 1; /* Return 1 if symbol pattern is detected */
+            handleError("ERROR --> Invalid label: Label must start with an alphabetic character", lineNum, line);
         }
+        return 0;
     }
-    return 0; /* Return 0 if no symbol pattern is detected */
+
+    /* Collect label characters */
+    while (isalnum((unsigned char)line[i]) && i < 31)
+    { /* Check for alphanumeric and limit length to 31 */
+        label[i] = line[i];
+        i++;
+    }
+
+    /* Check for the ':' immediately after the alphanumeric characters */
+    if (line[i] != ':' || (i > 0 && line[i - 1] == ' '))
+    {
+        if (errLabel == 1)
+        {
+            handleError("ERROR --> Invalid label: Label must end with a colon", lineNum, line);
+        }
+        return 0;
+    }
+
+    label[i] = '\0'; /* Null-terminate the label string */
+
+    /* Check if the label is a reserved word */
+    if (isReservedWord(label))
+    {
+        if (errLabel == 1)
+        {
+            handleError("ERROR --> Invalid label: Label cannot be a reserved word", lineNum, line);
+        }
+        return 0;
+    }
+    /* If all checks are passed */
+    return 1;
 }
 
 /* ############################### end HELPERS code ############################### */
@@ -249,13 +289,6 @@ int isSymbol(char *line)
 /**
  * Implements the isConstantDefinition function declared in first_pass.h.
  */
-int isConstantDefinition(char *line)
-{
-    printf("TEST --> Checking if constant definition\n");
-
-    /* Compare the first word of the line to ".define" to determine if it is a constant definition */
-    return strcmp(getFirstWord(line), ".define") == 0; /* Return 1 if it matches, otherwise 0 */
-}
 
 /**
  * Implements the processDefinition function declared in first_pass.h.
@@ -347,6 +380,7 @@ void processDirective(char *line)
         processDataDirective(line); /* Call to process string directive */
         /* ! Refactor */
         break;
+    case DEFINE_DIRECTIVE:
     case ENTRY_DIRECTIVE:
         printf("TEST --> Entry directive\n");
         break;
@@ -509,9 +543,14 @@ DirectiveType getDirectiveType(char *line)
     {
         return EXTERN_DIRECTIVE;
     }
+    if (strcmp(directiveName, ".define") == 0)
+    {
+        return DEFINE_DIRECTIVE;
+    }
     /* If none of the known directives match, return invalid directive type */
     else
     {
+        handleError("ERROR --> Invalid directive", lineNum, line);
         return INVALID_DIRECTIVE;
     }
 }
@@ -580,10 +619,14 @@ int isInstruction(char *line)
     /* Loop through the command table to check for a match */
     for (i = 0; i < CMD_NUM; i++)
     {
-        if (strcmp(instructionName, commandTable[i].cmdName) == 0)
+        if (strCaseCmp(instructionName, commandTable[i].cmdName) == 0) /* Case-insensitive comparison */
         {
-            printf("TEST --> Instruction found: %s\n", commandTable[i].cmdName); /* Debugging message indicating a match */
-            return 1;                                                            /* Return 1 if a match is found indicating an instruction */
+            if (strcmp(instructionName, commandTable[i].cmdName) != 0) /* Case-sensitive comparison */
+            {
+                printf("ERROR --> Instruction case mismatch: '%s' should be '%s'\n", instructionName, commandTable[i].cmdName);
+            }
+            printf("TEST --> Instruction found: %s\n", commandTable[i].cmdName);
+            return 1; /* Return 1 if a match is found indicating an instruction */
         }
     }
     return 0; /* Return 0 if no match is found */

@@ -63,4 +63,6 @@ void trimLine(char *line);
 
 int isNumeric(const char *str);
 
+int strCaseCmp(const char *s1, const char *s2);
+
 #endif /* UTILS_H */

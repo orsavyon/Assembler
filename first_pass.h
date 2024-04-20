@@ -38,13 +38,14 @@ void firstPass(FILE *fp);
 char *getFirstWord(const char *line);
 
 /**
- * Determines if a line of assembly code contains a symbol declaration.
- * A symbol in assembly is typically indicated by a colon followed by a space.
+ * Checks if the provided line of assembly code begins with a valid label.
+ * A label starts with an alphabet character, followed by alphanumeric characters, up to 31 characters long,
+ * and ends with a ':' without any preceding spaces.
  *
- * @param line A character pointer to the line to be checked for a symbol.
- * @return An integer 1 if a symbol is present, otherwise 0.
+ * @param line A character pointer to the line to be checked for a label.
+ * @return Returns 1 if a valid label is present and it is not a reserved word, otherwise returns 0.
  */
-int isSymbol(char *line);
+int isLabel(char *line);
 
 /**
  * Determines the type of a line.
@@ -123,11 +124,11 @@ void processDataDirective(char *line);
 /* ########## LINE_INSTRUCTION ########## */
 
 /**
- * Determines if a given line from an assembly source code represents an instruction.
- * This function compares the first word of the line against a predefined table of command names to check for a match.
+ * Checks if the first word of the line is a valid assembly instruction.
+ * Issues a notice if an instruction matches case-insensitively but not case-sensitively.
  *
- * @param line A character pointer to the line to be checked.
- * @return An integer 1 if the line contains an instruction, otherwise 0.
+ * @param line A string containing the assembly line to check.
+ * @return Returns 1 if a valid instruction is found, otherwise returns 0.
  */
 int isInstruction(char *line);
 

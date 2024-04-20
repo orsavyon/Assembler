@@ -15,6 +15,7 @@
 #define CMD_NUM 16
 #define MAX_OPERANDS 2
 #define MAX_SYMBOLS 100
+#define MAX_RESERVED_WORDS 27
 
 /* Global variables for assembler state */
 extern int IC;               /* Instruction Counter */
@@ -132,6 +133,7 @@ typedef enum
     STRING_DIRECTIVE,
     ENTRY_DIRECTIVE,
     EXTERN_DIRECTIVE,
+    DEFINE_DIRECTIVE,
     INVALID_DIRECTIVE
 } DirectiveType;
 
@@ -200,6 +202,8 @@ void initTranslationTable();
  * @param word The word to be added at the specified address.
  */
 void insertTranslationToTable(int decimalAddress, Word *word);
+
+int isReservedWord(char *word);
 
 void printMemory();
 

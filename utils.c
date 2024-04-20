@@ -184,3 +184,20 @@ int isNumeric(const char *str)
     }
     return 1;
 }
+
+/**
+ * Compares two strings for equality, ignoring the case of characters.
+ *
+ * @param s1 The first string.
+ * @param s2 The second string.
+ * @return Returns 0 if both strings are equal (case-insensitive), a negative value if s1 is less than s2, and a positive value if s1 is greater than s2.
+ */
+int strCaseCmp(const char *s1, const char *s2)
+{
+    while (*s1 && *s2 && tolower((unsigned char)*s1) == tolower((unsigned char)*s2))
+    {
+        s1++;
+        s2++;
+    }
+    return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
+}

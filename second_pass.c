@@ -56,6 +56,7 @@ void handleDirective(char *line)
     case DATA_DIRECTIVE:
     case STRING_DIRECTIVE:
     case EXTERN_DIRECTIVE:
+    case DEFINE_DIRECTIVE:
         break;
     case ENTRY_DIRECTIVE:
         printf("ENTRY_DIRECTIVE\n");
@@ -63,7 +64,7 @@ void handleDirective(char *line)
         printf("symbolName: %s\n", symbolName);
         while (symbolName != NULL)
         {
-            if (isSymbol(symbolName))
+            if (isLabel(symbolName))
             {
                 printf("symbolName: %s\n", symbolName);
             }
