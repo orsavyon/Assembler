@@ -3,6 +3,7 @@
 
 #include "../utils.h"
 
+
 /**
  * @struct Macro
  * Represents a macro object.

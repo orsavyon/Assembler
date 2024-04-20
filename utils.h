@@ -7,6 +7,8 @@
 #define MAX_LINE_LENGTH 81
 #define FOUR_CHARS_INDENTATION 4
 #define COMMENT_PREFIX ';'
+#define BINARY_DIGITS 14
+#define BASE_4_DIGITS 4
 
 /**
  * @brief Removes all white spaces from the source_line and saves the result in dest_line.
@@ -33,7 +35,27 @@ void remove_prefix_white_spaces(char *source_line, char *dest_line);
  * @note The assumption is that macro content is written in indentation of 4 chars.
  */
 
- void remove_macro_indentation(char *sourceline, char *dest_line);
+void remove_macro_indentation(char *sourceline, char *dest_line);
 
+/**
+ * @brief Transform an binary 15 digits array to decimals array
+ * 
+ * @param binary The binary 15 digits array.
+ */
+int binaryToDecimal(int binary[]);
+
+/**
+ * @brief Transform an decimal array to base4 array.
+ * 
+ * @param decimal The decimal array.
+ */
+int * decimalToBase4(int decimal);
+
+/**
+ * @brief Transform an base4 array to encoded strings array.
+ * 
+ * @param base4 The base4 array.
+ */
+char * base4ToEncoded(int base4[]);
 
 #endif

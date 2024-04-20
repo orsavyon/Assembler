@@ -67,3 +67,80 @@ int is_integer(const char *str)
 
     return *endptr == '\0';
 }
+
+int binaryToDecimal(int binary[]) {
+    int decimal = 0;
+    for (int i = 0; i < 14; i++) {
+        decimal = decimal * 2 + binary[i];
+    }
+    return decimal;
+}
+
+int * decimalToBase4(int decimal) {
+    int *base4 = (int *)malloc(BASE_4_DIGITS * sizeof(int));
+    if (base4 == NULL) {
+        return NULL; /*Memory allocation failed*/
+    }
+
+    int i = 0;
+    /*Convert decimal to base 4*/
+    while (decimal > 0) {
+        base4[i] = decimal % 4;
+        decimal = decimal / 4;
+        i++;
+    }
+
+    // If decimal is 0, we need to handle that separately
+    if (i == 0) {
+        base4[0] = 0;
+    }
+
+    // Fill remaining digits with 0
+    for (; i < BASE_4_DIGITS; i++) {
+        base4[i] = 0;
+    }
+
+    return base4;
+}
+
+char * base4ToEncoded(int base4[]) {
+    char *encoded = (char *)malloc(5 * sizeof(char)); // Allocate memory for encoded pattern
+
+    if (encoded == NULL) {
+        return NULL; // Memory allocation failed
+    }
+
+    for (int i = 0; i < 4; i++) {
+        switch (base4[i]) {
+            case 0:
+                encoded[i] = '*';
+                break;
+            case 1:
+                encoded[i] = '#';
+                break;
+            case 2:
+                encoded[i] = '%';
+                break;
+            case 3:
+                encoded[i] = '!';
+                break;
+            default:
+                printf("Invalid base 4 digit.\n");
+                free(encoded); // Free memory before returning
+                return NULL;
+        }
+    }
+
+    encoded[4] = '\0'; // Null-terminate the string
+
+    // Concatenate characters into one string
+    char *encodedString = (char *)malloc((strlen(encoded) + 1) * sizeof(char));
+    if (encodedString == NULL) {
+        free(encoded);
+        return NULL; // Memory allocation failed
+    }
+    strcpy(encodedString, encoded);
+
+    free(encoded); // Free memory for encoded pattern
+    return encodedString;
+}
