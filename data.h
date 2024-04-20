@@ -102,6 +102,8 @@ typedef struct MemoryEntry
 
 extern MemoryEntry memoryLines[MAX_DATA]; /* Memory array for the assembler */
 
+extern unsigned int memoryAddress[MAX_DATA]; /* Memory array for the assembler */
+
 /* Enumeration for different types of symbols */
 typedef enum
 {
@@ -216,4 +218,7 @@ void setRegisterValue(Word *word, int srcRegNum, int destRegNum, int hasSrc, int
 int computeFourteenBitValue(int value);
 void printAsBinary(int value);
 void printFirstWordAsBinary(Word word);
+unsigned int getFirstWordAsBinary(Word word);
+void printMemoryAddress();
+void storeMemoryLine();
 #endif /* DATA_H */

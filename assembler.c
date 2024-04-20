@@ -89,6 +89,18 @@ int main(int argc, char *argv[])
                 /* Perform the second pass of the assembler */
                 secondPass(mc);
                 /*Create output files ob ent ext*/
+                if (errorFlag)
+                {
+                    fprintf(stderr, "Errors detected in the second pass. Exiting...\n");
+                    free(fileName);
+                    fclose(mc);
+                    fclose(cp);
+                    exit(1);
+                }
+                else
+                {
+                    printf("No errors detected. Output files created.\n");
+                }
 
                 fclose(mc);
             }

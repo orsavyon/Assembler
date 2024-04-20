@@ -62,6 +62,8 @@ int errorFlag = 0;    /* Flag for error detection */
 int memory[MAX_DATA]; /* Memory array for the assembler */
 
 MemoryEntry memoryLines[MAX_DATA];
+
+unsigned int memoryAddress[MAX_DATA];
 /* Data array for the assembler */
 
 /**
@@ -426,6 +428,56 @@ void printMemoryLines()
             printAsBinary(memoryLines[i].value);
             break;
         }
+    }
+}
+
+void storeMemoryLine()
+{
+    int i;
+    unsigned int binaryValue;
+    for (i = 0; i < IC + DC; i++)
+    {
+        switch (memoryLines[i].type)
+        {
+        case IMMEDIATE_ADDRESSING:
+        case INDEX_ADDRESSING_VALUE:
+        case REGISTER_ADDRESSING:
+            memoryAddress[i] = memoryLines[i].word->value;
+            break;
+        case DIRECT_ADDRESSING:
+        case INDEX_ADDRESSING:
+            memoryAddress[i] = memoryLines[i].value;
+            break;
+        case INSTRUCTION_ADDRESSING:
+            binaryValue = getFirstWordAsBinary(*memoryLines[i].word);
+            memoryAddress[i] = binaryValue;
+            break;
+        default:
+            memoryAddress[i] = memoryLines[i].value;
+            break;
+        }
+    }
+}
+
+unsigned int getFirstWordAsBinary(Word word)
+{
+    unsigned int result = 0;
+    result |= word.bits.na << 10;
+    result |= word.bits.opcode << 6;
+    result |= word.bits.srcOp << 4;
+    result |= word.bits.desOp << 2;
+    result |= word.bits.ARE;
+    return result;
+}
+
+void printMemoryAddress()
+{
+    int i;
+    printf("Memory Address Content:\n");
+    for (i = 0; i < IC + DC; i++)
+    {
+        printf("%d : %d : ", i + 100, memoryAddress[i]);
+        printAsBinary(memoryAddress[i]);
     }
 }
 

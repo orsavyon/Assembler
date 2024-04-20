@@ -10,7 +10,6 @@
 void secondPass(FILE *fp)
 {
     char line[MAX_LINE_LENGTH];
-    char *instructionPart;
     lineNum = 0;
 
     printf("\n --- in secondPass --- \n\n");
@@ -32,25 +31,20 @@ void secondPass(FILE *fp)
 
         case LINE_INSTRUCTION:
             printf("LINE_INSTRUCTION\n");
-            /*encodeRemainingInstruction(line);*/
         case LINE_LABEL:
-            /*
-                instructionPart = extractInstruction(line);
-                printf("LINE_LABEL\n");
-                if (instructionPart != NULL && isValidInstruction(instructionPart))
-                {
-                    printf("instructionPart: %s\n", instructionPart);
-                    encodeRemainingInstruction(instructionPart);
-                }
-                */
+
             break;
         case INVALID_LINE:
             break;
         }
     }
-    encodeRemainingInstruction2();
+    encodeRemainingInstruction();
     printSymbolTable();
     printMemoryLines();
+    storeMemoryLine();
+    printMemoryAddress();
+    printf("IC = %d\n", IC);
+    printf("DC = %d\n", DC);
 }
 
 void handleDirective(char *line)
@@ -81,7 +75,7 @@ void handleDirective(char *line)
     }
 }
 
-void encodeRemainingInstruction2()
+void encodeRemainingInstruction()
 {
     int i;
     int newValue;
@@ -99,76 +93,6 @@ void encodeRemainingInstruction2()
     }
 }
 
-void encodeRemainingInstruction(char *line)
-{
-    Instruction instruction;
-    memset(&instruction, 0, sizeof(Instruction));
-
-    printf("TEST --> In encodeRemainingInstruction\n");
-    if (parseInstruction(line, &instruction) != NULL)
-    {
-        int i;
-        printf("TEST --> in encodeRemainingInstruction Validated\n");
-        for (i = 0; i < MAX_OPERANDS; i++)
-        {
-            Addressing addressingMethod;
-            if (instruction.operands[i] != NULL)
-            {
-                addressingMethod = getAddressingMethod(instruction.operands[i]);
-                printf("addressingMethod: %d\n", addressingMethod);
-                printf("instruction.operands[i]: %s\n", instruction.operands[i]);
-
-                if (addressingMethod == IMMEDIATE || addressingMethod == REGISTER)
-                {
-                    continue;
-                }
-                else if (addressingMethod == DIRECT || addressingMethod == INDEX)
-                {
-                    if (addressingMethod == INDEX)
-                    {
-                        char *symbol = strtok(instruction.operands[i], "[");
-                        encodeSymbol(symbol);
-                    }
-                    else
-                    {
-                        encodeSymbol(instruction.operands[i]);
-                    }
-                }
-                else
-                {
-                    handleError("Invalid addressing mode", lineNum, line);
-                }
-            }
-            else
-            {
-                continue;
-            }
-        }
-    }
-    else
-    {
-        handleError("Error parsing instruction", lineNum, line);
-    }
-}
-
-char *extractInstruction(char *line)
-{
-    char *colon = strchr(line, ':');
-    if (colon != NULL)
-    {
-        char *instructionStart = colon + 1;
-        while (isspace((unsigned char)*instructionStart))
-        {
-            instructionStart++;
-        }
-        if (*instructionStart != '\0')
-        {
-            return instructionStart;
-        }
-    }
-    return NULL;
-}
-
 int encodeSymbol(char *symbol)
 {
     Symbol *sym = lookupSymbol(symbol);
@@ -178,7 +102,7 @@ int encodeSymbol(char *symbol)
     {
 
         printf("encodeSymbol: %s\n", symbol);
-        areBits = (sym->symbolType == 1) ? 0x01 : 0x02; /* ARE bits: 01 for external, 10 for relocatable */
+        areBits = (sym->symbolType == external) ? 0x01 : 0x02; /* ARE bits: 01 for external, 10 for relocatable */
         encodedValue = setValue(sym->value, areBits);
         printf("encodedValue: %d \n", encodedValue);
         printAsBinary(encodedValue);

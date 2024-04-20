@@ -11,14 +11,10 @@ void secondPass(FILE *fp);
 
 void handleDirective(char *line);
 
-void encodeRemainingInstruction(char *line);
-
-char *extractInstruction(char *line);
-
 int encodeSymbol(char *symbol);
 
 int setValue(int value, unsigned int areBits);
 
-void encodeRemainingInstruction2();
+void encodeRemainingInstruction();
 
 #endif
