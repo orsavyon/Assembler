@@ -5,15 +5,23 @@
 #include "utils.h"
 #include "data.h"
 
+/**
+ * @brief Duplicates a string by allocating memory for the new string and copying the content.
+ *
+ * @param str The string to duplicate.
+ * @return A pointer to the new string, which is a duplicate of the original.
+ */
 char *strdup(char *str)
 {
+    /* Attempt to allocate memory for the duplicate string */
     char *p;
     p = (char *)malloc(strlen(str) + 1); /* +1 for the null terminator */
+    /* Return NULL if the original string is NULL */
     if (str == NULL)
     {
         return NULL;
     }
-
+    /* Copy the original string if memory allocation was successful */
     if (p != NULL)
     {
         strcpy(p, str);
@@ -88,38 +96,35 @@ void skipAndCopy(FILE *source, FILE *dest)
 /**
  * @brief Trims whitespace characters from both ends of a string.
  *
- * @param line The string to be trimmed.
- */
-/**
- * @brief Trims whitespace characters from both ends of a string.
+ * It adjusts the provided string in place, removing all leading and trailing whitespace
+ * characters, including spaces, tabs, and newlines.
  *
- * @param line The string to be trimmed.
- *
- * @brief Trims whitespace characters from both ends of a string.
- *
- * @param line The string to be trimmed.
+ * @param line The string to be trimmed. This string is modified in place.
  */
 void trimLine(char *line)
 {
-    char *start = line;
+    char *start = line; /* Pointer to the start of the string */
     char *end;
-
+    /* Skip all leading whitespace characters */
     while (isspace((unsigned char)*start))
     {
         start++;
     }
-
+    /* Move the non-whitespace part to the beginning of the original string if needed */
     if (start != line)
     {
-        memmove(line, start, strlen(start) + 1);
+        memmove(line, start, strlen(start) + 1); /* +1 to include the null terminator */
     }
-
+    /* Find the end of the string after leading whitespace is removed */
     end = line + strlen(line) - 1;
+
+    /* Remove trailing whitespace characters, including possible newline characters */
     while (end >= line && (isspace((unsigned char)*end) || *end == '\n'))
     {
         end--;
     }
 
+    /* Null terminate the string after the last non-whitespace character */
     *(end + 1) = '\0';
 }
 
@@ -149,40 +154,79 @@ void handleError(const char *errorMessage, int lineNumber, char *line)
     fprintf(stderr, "ERROR ____ > Error in line %d: %s\n\t%s\n", lineNumber, errorMessage, line);
 }
 
+/**
+ * @brief Converts an integer to its binary string representation.
+ *
+ * Allocates memory for a 16-bit binary string and converts the integer value to binary.
+ * Each bit of the integer is converted to '0' or '1' and placed into the string from right to left.
+ *
+ * @param value The integer value to convert.
+ * @return A pointer to the binary string representation of the integer, or NULL if memory allocation fails.
+ */
 char *intToBinary(int value)
 {
+    /* Allocate memory for a 17-character string to store 16 bits and a null terminator */
     char *binaryStr = malloc(17);
     int i;
+
+    /* Check for memory allocation failure */
     if (binaryStr == NULL)
     {
         fprintf(stderr, "Memory allocation failed\n");
         return NULL;
     }
-
+    /* Set the last character of the array to the null terminator */
     binaryStr[16] = '\0';
 
+    /* Fill the string with binary digits from the least significant to the most significant bit */
     for (i = 15; i >= 0; i--)
     {
-        binaryStr[i] = (value & 1) + '0';
-        value >>= 1;
+        binaryStr[i] = (value & 1) + '0'; /* Convert the least significant bit of value to '0' or '1' */
+        value >>= 1;                      /* Shift the value right by one bit to process the next bit */
     }
 
     return binaryStr;
 }
 
+/**
+ * @brief Converts an integer to a 14-bit integer by applying a mask.
+ *
+ * This function masks the integer with 0x3FFF to ensure that only the lower 14 bits are retained.
+ * This is useful for operations that require values to be limited to 14 bits.
+ *
+ * @param value The integer to be converted to 14-bit.
+ * @return The 14-bit masked integer.
+ */
 int intTo14Bit(int value)
 {
-    return value & 0x3FFF;
+    return value & 0x3FFF; /* Apply a 14-bit mask to the value */
 }
 
+/**
+ * @brief Checks if the string represents a numeric value.
+ *
+ * This function checks if the first character is a digit, or a leading '+' or '-'. Subsequent characters must all be digits.
+ * If any character outside these categories is found, the function returns 0, indicating the string is not numeric.
+ *
+ * @param str The string to be checked.
+ * @return 1 if the string is numeric, 0 otherwise.
+ */
 int isNumeric(const char *str)
 {
+    /* Check if the initial character is a sign */
+    if (*str == '+' || *str == '-')
+        str++; /* Move to the next character */
+
+    /* Check each character to see if it is a digit */
+    if (!*str) /* Check for an empty string after the sign */
+        return 0;
+
     while (*str)
     {
-        if (!isdigit(*str++) && *str != '+' && *str != '-')
+        if (!isdigit(*str++)) /* Check for non-digit characters */
             return 0;
     }
-    return 1;
+    return 1; /* All characters are valid digits, return true */
 }
 
 /**

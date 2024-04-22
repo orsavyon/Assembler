@@ -8,7 +8,9 @@
 /* Constant definitions for assembler limits */
 #define MAX_LABEL_LENGTH 31
 #define MAX_SYMBOLS 100
-#define MAX_DATA 1000
+#define MAX_DATA 4097
+#define MIN_12BIT_VALUE -2048
+#define MAX_12BIT_VALUE 2047
 #define MAX_LABELS 100
 #define MAX_COMMANDS 100
 #define MAX_LINE_LENGTH 81
@@ -194,35 +196,125 @@ void updateSymbolValues();
  * Initializes the translation table with NULL values.
  */
 void initTranslationTable();
-
 /**
- * Adds a line to the translation table at the specified decimal address.
+ * @brief Checks if a given word is a reserved word in the assembler.
  *
- * @param decimalAddress The address in the table where the word will be added.
- * @param word The word to be added at the specified address.
+ * This function iterates through an array of reserved words and compares each with the provided
+ * word. If a match is found, the function returns 1, indicating the word is reserved.
+ *
+ * @param word The word to check against the list of reserved words.
+ * @return 1 if the word is a reserved word, 0 otherwise.
  */
-void insertTranslationToTable(int decimalAddress, Word *word);
-
 int isReservedWord(char *word);
-
+/**
+ * @brief Displays the content of memory up to the combined count of instruction and data counters.
+ *
+ * Iterates through the memory array from 0 to the sum of IC (Instruction Counter) and DC (Data Counter),
+ * printing each memory cell's index and value.
+ */
 void printMemory();
-
+/**
+ * @brief Displays the content of memory lines based on their addressing types.
+ *
+ * Iterates through the memory lines up to the sum of IC (Instruction Counter) and DC (Data Counter),
+ * printing each memory line's type and value or binary representation depending on the addressing type.
+ */
 void printMemoryLines();
-
+/**
+ * @brief Initializes the memory lines array used in the assembler.
+ *
+ * Allocates memory for each 'Word' in the memoryLines array and sets initial values.
+ * If memory allocation fails, the function will terminate the program.
+ */
 void initMemoryLines();
-
+/**
+ * @brief Frees allocated memory for each word in the memoryLines array.
+ *
+ * Iterates through the memoryLines array and frees the memory allocated for each word,
+ * then sets the pointer to NULL to avoid dangling references.
+ */
 void freeMemoryLines();
 
 void printWordAsBinary(const Word word);
-
+/**
+ * @brief Sets the immediate value and ARE bits in a Word's value field.
+ *
+ * This function configures a Word structure by setting its value field with an immediate
+ * value shifted by two positions and combined with the ARE (Assembler Relocation Entries) bits.
+ * It processes the immediate value to handle negative numbers appropriately within a 12-bit limit.
+ *
+ * @param word Pointer to the Word structure to be modified.
+ * @param immediateValue The immediate value to encode into the word.
+ * @param areBits The A, R, E bits to set in the lower two bits of the word.
+ */
 void setImmediateValue(Word *word, int immediateValue, unsigned int areBits);
-
+/**
+ * @brief Configures a Word structure to encode register numbers and their presence.
+ *
+ * This function sets up the Word's value to represent source and destination register numbers
+ * based on provided flags indicating their presence. It positions the register numbers in the
+ * word value based on predefined bit positions: source register at bits 5-7 and destination register
+ * at bits 2-4.
+ *
+ * @param word Pointer to the Word structure to be modified.
+ * @param srcRegNum Source register number.
+ * @param destRegNum Destination register number.
+ * @param hasSrc Flag indicating if the source register is to be encoded.
+ * @param hasDest Flag indicating if the destination register is to be encoded.
+ */
 void setRegisterValue(Word *word, int srcRegNum, int destRegNum, int hasSrc, int hasDest);
-
+/**
+ * @brief Computes a fourteen-bit representation of an integer value.
+ *
+ * This function adjusts a given integer to fit within a fourteen-bit range. If the value is negative,
+ * it is converted using two's complement within the 14-bit limit. For positive values, it simply masks
+ * the value to ensure it does not exceed fourteen bits.
+ *
+ * @param value The integer value to be converted.
+ * @return The fourteen-bit adjusted integer.
+ */
 int computeFourteenBitValue(int value);
+
+/**
+ * @brief Prints the binary representation of the full word value from a Word structure.
+ *
+ * This function outputs the 14-bit binary representation of the 'value' field in the Word structure,
+ * displaying it as a binary string from the most significant bit to the least significant bit.
+ *
+ * @param word The Word structure whose full word value is to be printed in binary.
+ */
 void printAsBinary(int value);
+/**
+ * @brief Prints the binary representation of a Word structure.
+ *
+ * This function sequentially prints the binary bits of each field within a Word's bit-fields:
+ * 'na', 'opcode', 'srcOp', 'desOp', and 'ARE', displaying the complete binary format of the word.
+ *
+ * @param word The Word structure whose binary representation is to be printed.
+ */
 void printFirstWordAsBinary(Word word);
+/**
+ * @brief Converts the components of a Word structure into a binary format.
+ *
+ * This function takes each field of the Word's bit-fields and positions them into a single
+ * unsigned integer according to their respective bit positions in the assembler's binary format.
+ *
+ * @param word The Word structure to convert.
+ * @return The unsigned integer representing the binary format of the Word.
+ */
 unsigned int getFirstWordAsBinary(Word word);
+/**
+ * @brief Displays the content of the memory address array.
+ *
+ * Iterates through the memory address array from 0 to the sum of the Instruction Counter (IC)
+ * and Data Counter (DC), printing each address and its corresponding value in binary format.
+ */
 void printMemoryAddress();
+/**
+ * @brief Stores the values from memory lines into the memory address array based on addressing type.
+ *
+ * Iterates through combined memory lines determined by the Instruction Counter (IC) and Data Counter (DC),
+ * storing values in the memory address array. The type of value stored depends on the addressing method of the line.
+ */
 void storeMemoryLine();
 #endif /* DATA_H */

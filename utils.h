@@ -3,7 +3,26 @@
 
 #include <stdio.h>
 
+/**
+ * @brief Converts an integer to its binary string representation.
+ *
+ * Allocates memory for a 16-bit binary string and converts the integer value to binary.
+ * Each bit of the integer is converted to '0' or '1' and placed into the string from right to left.
+ *
+ * @param value The integer value to convert.
+ * @return A pointer to the binary string representation of the integer, or NULL if memory allocation fails.
+ */
 char *intToBinary(int value);
+
+/**
+ * @brief Converts an integer to a 14-bit integer by applying a mask.
+ *
+ * This function masks the integer with 0x3FFF to ensure that only the lower 14 bits are retained.
+ * This is useful for operations that require values to be limited to 14 bits.
+ *
+ * @param value The integer to be converted to 14-bit.
+ * @return The 14-bit masked integer.
+ */
 
 int intTo14Bit(int value);
 
@@ -61,8 +80,25 @@ void handleError(const char *errorMessage, int lineNumber, char *line);
  */
 void trimLine(char *line);
 
+/**
+ * @brief Checks if the string represents a numeric value.
+ *
+ * This function iterates through each character of the string to determine if it is a digit,
+ * or a leading '+' or '-' sign, which are valid in numeric strings. If any character outside
+ * these categories is found, the function returns 0, indicating the string is not numeric.
+ *
+ * @param str The string to be checked.
+ * @return 1 if the string is numeric, 0 otherwise.
+ */
 int isNumeric(const char *str);
 
+/**
+ * Compares two strings for equality, ignoring the case of characters.
+ *
+ * @param s1 The first string.
+ * @param s2 The second string.
+ * @return Returns 0 if both strings are equal (case-insensitive), a negative value if s1 is less than s2, and a positive value if s1 is greater than s2.
+ */
 int strCaseCmp(const char *s1, const char *s2);
 
 #endif /* UTILS_H */

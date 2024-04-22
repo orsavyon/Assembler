@@ -42,6 +42,15 @@ void firstPass(FILE *fp)
     while (fgets(line, MAX_LINE_LENGTH, fp) != NULL)
     {
         lineNum++;
+
+        /* Check if line exceeds the limit */
+        if (strlen(line) == MAX_LINE_LENGTH - 1 && line[MAX_LINE_LENGTH - 2] != '\n')
+        {
+            handleError("Line length exceeds the limit", lineNum, line);
+            continue;
+        }
+
+        /* Trimming line to remove possible trailing whitespaces */
         trimLine(line);
         printf("TEST --> Line %d: %s\n", lineNum, line);
 
@@ -55,7 +64,7 @@ void firstPass(FILE *fp)
 
         case LINE_DEFINITION:
             printf("TEST --> Definition\n");
-            /* Process constant definitions */
+            /* Line detected with .define - Process constant definitions */
             processDefinition(line);
             break;
 
@@ -283,12 +292,8 @@ int isLabel(char *line)
 }
 
 /* ############################### end HELPERS code ############################### */
-
+/* ############################################################################################# */
 /* ############################### start LINE_DEFINITION code ############################### */
-
-/**
- * Implements the isConstantDefinition function declared in first_pass.h.
- */
 
 /**
  * Implements the processDefinition function declared in first_pass.h.
@@ -311,7 +316,7 @@ void processDefinition(char *line)
     else
     {
         /* Handle the error if the definition line is invalid */
-        handleError("TEST --> Invalid constant definition", lineNum, line);
+        handleError("Invalid constant definition", lineNum, line);
     }
 }
 
@@ -320,46 +325,73 @@ void processDefinition(char *line)
  */
 int isValidConstantDefinition(char *line)
 {
-    /* Allocate memory for potential constant name */
-    char *constantName = (char *)malloc(MAX_LINE_LENGTH * sizeof(char));
+    char lineCopy[MAX_LINE_LENGTH]; /* Buffer to hold a copy of the line */
+    char *constantPart, *valuePart;
     int value;
+    char *start;
 
-    printf("TEST --> Validating constant definition\n");
-    /* Check if the line contains an equal sign which is crucial for valid definition syntax */
-    if (strstr(line, "=") == NULL)
+    printf("TEST --> Checking constant definition\n");
+    /* Copy the line to prevent modification of the original */
+    strncpy(lineCopy, line, MAX_LINE_LENGTH);
+    lineCopy[MAX_LINE_LENGTH - 1] = '\0'; /* Ensure null termination */
+    start = lineCopy;
+
+    if (strstr(start, ".define ") == start)
     {
-        handleError("TEST --> Invalid constant definition: Missing equal sign", lineNum, line);
+        start += strlen(".define "); /*Move past ".define " and any space right after it*/
+    }
+    else
+    {
+        handleError("Error: Line does not start with '.define '", lineNum, line);
         return 0;
     }
-    /* Extract the constant name and its value from the line */
-    sscanf(line, ".define %[^=]=%d", constantName, &value);
-    trimLine(constantName); /* Remove any extraneous whitespace from the constant name */
-    printf("TEST --> Constant name: '%s'\n", constantName);
-    printf("TEST --> Value: %d\n", value);
+    printf("TEST --> Line copy: %s\n", start);
 
-    /* Check if the constant name already exists in the symbol table */
-    if (lookupSymbol(constantName) != NULL)
+    /* Use trimLine to handle any extraneous spaces at the start or end */
+    trimLine(start);
+
+    /* Attempt to split at the first occurrence of '=' */
+    constantPart = strtok(start, "=");
+    valuePart = strtok(NULL, "");
+
+    if (constantPart == NULL || valuePart == NULL)
     {
-        handleError("TEST --> Symbol is already defined", lineNum, line);
-        free(constantName); /* Free the allocated memory as the definition is invalid */
+        handleError("Invalid constant definition: Missing '=' or incomplete definition", lineNum, line);
         return 0;
     }
 
-    /* Ensure the value is within the valid range for 12-bit integers */
-    if (value < -2048 || value > 2047)
+    /* Trim both parts to handle spaces around '=' */
+    trimLine(constantPart);
+    trimLine(valuePart);
+
+    /* Ensure value part is numeric and convert it */
+    if (!isNumeric(valuePart))
     {
-        handleError("TEST --> Value is out of range", lineNum, line);
-        free(constantName); /* Free the allocated memory as the value is out of range */
+        handleError("Invalid constant definition: Number format error", lineNum, line);
+        return 0;
+    }
+    value = atoi(valuePart);
+
+    /* Check constant name for validity */
+    if (isReservedWord(constantPart) || lookupSymbol(constantPart) != NULL)
+    {
+        handleError("Invalid constant definition: Reserved word used or symbol already defined", lineNum, line);
         return 0;
     }
 
-    free(constantName); /* Free the allocated memory after validation */
+    /* Validate the numeric value range */
+    if (value < MIN_12BIT_VALUE || value > MAX_12BIT_VALUE)
+    {
+        handleError("Invalid constant definition: Value out of range", lineNum, line);
+        return 0;
+    }
+    printf("TEST --> Valid constant definition in isValidConstant\n");
 
-    return 1; /* Return success if all checks pass */
+    return 1; /* Valid constant definition */
 }
 
 /* ############################### end LINE_DEFINITION code ############################### */
-
+/* ############################################################################################# */
 /* ############################### start LINE_DIRECTIVE code ############################### */
 
 /**
