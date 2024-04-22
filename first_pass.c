@@ -83,7 +83,11 @@ void firstPass(FILE *fp)
                 trimLine(remainingLine);
                 printf("TEST --> Remaining line: %s\n", remainingLine);
 
-                if (getLineType(remainingLine) == LINE_DIRECTIVE)
+                if (getLineType(remainingLine) == LINE_BLANK)
+                {
+                    handleError("Missing instruction/action after label", lineNum, line);
+                }
+                else if (getLineType(remainingLine) == LINE_DIRECTIVE)
                 {
                     printf("TEST --> Directive in label\n");
                     if (getDirectiveType(remainingLine) == DATA_DIRECTIVE || getDirectiveType(remainingLine) == STRING_DIRECTIVE)
@@ -97,7 +101,11 @@ void firstPass(FILE *fp)
                             handleError("TEST --> Symbol already exists", lineNum, line);
                         }
                     }
-                    processDirective(remainingLine);
+                    if (errorFlag == 0)
+                    {
+                        printf("TEST --> Processing directive in label\n");
+                        processDirective(remainingLine);
+                    }
                 }
                 else if (symbolFlag == 1)
                 {
@@ -111,15 +119,12 @@ void firstPass(FILE *fp)
                     {
                         handleError("TEST --> Symbol already defined", lineNum, line);
                     }
-                    if (getLineType(remainingLine) == LINE_INSTRUCTION)
+                    if (errorFlag == 0 && getLineType(remainingLine) == LINE_INSTRUCTION)
                     {
                         printf("TEST --> Instruction in label\n");
+
                         processInstruction(remainingLine);
                         printf("TEST --> IC after label instruction: %d\n", IC);
-                    }
-                    else
-                    {
-                        handleError("TEST --> Invalid line", lineNum, line);
                     }
                 }
                 else
@@ -441,6 +446,7 @@ void processDataDirective(char *line)
     char *token; /* Token for parsing the data elements */
     printf("TEST --> Processing data directive\n\t----Line: %s\n", line);
     /* Check if the line starts with '.data' directive */
+
     if (strncmp(line, ".data", 5) == 0)
     {
         token = strtok(line + 6, ","); /* Start tokenizing the line after the directive */
@@ -714,7 +720,10 @@ void processInstruction(char *line)
     }
     else
     {
-        handleError("TEST --> Invalid instruction", lineNum, line); /* Handle invalid instruction format */
+        if (errorFlag == 0)
+        {
+            handleError("TEST --> Invalid instruction", lineNum, line); /* Handle invalid instruction format */
+        }
     }
 }
 
@@ -832,9 +841,12 @@ Instruction *parseInstruction(char *line, Instruction *instruction)
     }
     if (isValidInstruction(buffer))
     {
-
+        int i = 0;
+        int expectedOperands;
+        int operandCount = 0;
+        char *operands;
         char *token = strtok(buffer, " \t"); /* Tokenize the line to extract the instruction name */
-        int i = 0;                           /* Counter for operands */
+                                             /* Counter for operands */
         printf("TEST --> Parsing instruction\n");
         if (!token)
         {
@@ -850,40 +862,52 @@ Instruction *parseInstruction(char *line, Instruction *instruction)
         }
 
         instruction->opcode = getOpcode(token); /* Set the opcode based on the instruction name */
-        token = strtok(NULL, " \t,");           /* Continue tokenizing to get operands */
-        printf("TEST --> Parsing instruction again\n");
 
-        while (token && i < MAX_OPERANDS)
+        expectedOperands = commandTable[instruction->opcode].numOfOps; /* Get the number of expected operands */
+        operands = strtok(NULL, "");
+
+        if (operands)
         {
-            printf("TEST --> Token of instruction: %s\n", token);
-            instruction->operands[i] = strdup(token); /* Store the operand */
-            if (!instruction->operands[i])
+            token = strtok(operands, ","); /* Tokenize the operands */
+            while (token && operandCount < MAX_OPERANDS)
             {
-                int j;
-                for (j = 0; j < i; j++)
+                trimLine(token); /* Trim whitespace around the token */
+
+                if (*token == '\0')
                 {
-                    free(instruction->operands[j]); /* Free any allocated operand strings on failure */
+                    handleError("Invalid operand", lineNum, line);
+                    return NULL;
                 }
 
-                free(instruction->name);
-                free(buffer);
-                return NULL; /* Return NULL if memory allocation fails for an operand */
+                instruction->operands[operandCount] = strdup(token); /* Store the operand */
+
+                if (!instruction->operands[operandCount])
+                {
+                    handleError("Memory allocation failed", lineNum, line);
+                    return NULL; /* Return NULL if memory allocation fails for an operand */
+                }
+                operandCount++;
+                token = strtok(NULL, ","); /* Continue to the next operand */
             }
-            i++;
-            token = strtok(NULL, " \t,"); /* Continue to the next operand */
         }
+
+        if (operandCount != expectedOperands)
+        {
+            handleError("Invalid number of operands", lineNum, line);
+            return NULL;
+        }
+
         printf("TEST --> Instruction name: %s\n", instruction->name);
         printf("TEST --> Opcode: %d\n", instruction->opcode);
         printf("TEST --> Operand 1: %s\n", instruction->operands[0]);
         printf("TEST --> Operand 2: %s\n", instruction->operands[1]);
         printf("TEST --> Number of operands: %d\n", i);
         free(buffer);
-
         return instruction; /* Return the filled instruction struct */
     }
     else
     {
-        handleError("TEST --> Invalid instruction", lineNum, line);
+        handleError("Invalid instruction format", lineNum, line);
         return NULL; /* Return NULL if the instruction is not valid */
     }
 }
