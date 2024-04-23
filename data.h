@@ -19,24 +19,26 @@
 #define MAX_SYMBOLS 100
 #define MAX_RESERVED_WORDS 27
 #define MAX_FILENAME_LEN 260
+#define MAX_EXTERNAL_USAGES 1000
 
 /* Global variables for assembler state */
-extern int IC;               /* Instruction Counter */
-extern int DC;               /* Data Counter */
-extern int L;                /* Line number in the source code */
-extern int symbolCount;      /* Number of symbols */
-extern int dataCount;        /* Number of data entries */
-extern int labelCount;       /* Number of labels */
-extern int commandCount;     /* Number of commands */
-extern int labelFlag;        /* Flag for label detection */
-extern int dataFlag;         /* Flag for data detection */
-extern int commandFlag;      /* Flag for command detection */
-extern int symbolFlag;       /* Flag for symbol detection */
-extern int entryFlag;        /* Flag for entry detection */
-extern int externFlag;       /* Flag for extern detection */
-extern int lineNum;          /* Current line number being processed */
-extern int errorFlag;        /* Flag for error detection */
-extern int memory[MAX_DATA]; /* Memory array for the assembler */
+extern int IC;                 /* Instruction Counter */
+extern int DC;                 /* Data Counter */
+extern int L;                  /* Line number in the source code */
+extern int symbolCount;        /* Number of symbols */
+extern int dataCount;          /* Number of data entries */
+extern int labelCount;         /* Number of labels */
+extern int commandCount;       /* Number of commands */
+extern int labelFlag;          /* Flag for label detection */
+extern int dataFlag;           /* Flag for data detection */
+extern int commandFlag;        /* Flag for command detection */
+extern int symbolFlag;         /* Flag for symbol detection */
+extern int entryFlag;          /* Flag for entry detection */
+extern int externFlag;         /* Flag for extern detection */
+extern int lineNum;            /* Current line number being processed */
+extern int errorFlag;          /* Flag for error detection */
+extern int externalUsageCount; /* Number of external symbols used in the program */
+extern int memory[MAX_DATA];   /* Memory array for the assembler */
 
 /* Array of saved words used by the assembler */
 extern char *savedWords[];
@@ -118,6 +120,13 @@ typedef enum
     mdefine   /* Macro definition */
 } SymbolType;
 
+typedef struct externalSymbolUsage
+{
+    char *symbolName;
+    int address;
+} ExternalSymbolUsage;
+extern ExternalSymbolUsage externalUsages[MAX_EXTERNAL_USAGES];
+
 /* Structure defining a symbol in the symbol table */
 typedef struct Symbol
 {
@@ -191,7 +200,13 @@ void addSymbol(const char *name, SymbolType type, unsigned int value);
  */
 void printSymbolTable();
 
+void printExternSymbolUsage();
+
 void updateSymbolValues();
+
+void recordExternalSymbolUsage(char *symbolName, int address);
+
+void updateSymbolType(char *symbolName, int type);
 
 /**
  * Initializes the translation table with NULL values.

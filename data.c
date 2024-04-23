@@ -44,24 +44,27 @@ void addTranslationLine(int decimalAddress, Word *word)
 }
 
 /* Global variables used in the assembly process */
-int IC = 0;           /* Instruction counter */
-int DC = 0;           /* Data counter */
-int L = 0;            /* Line number (not used here) */
-int symbolCount = 0;  /* Number of symbols */
-int dataCount = 0;    /* Number of data entries */
-int labelCount = 0;   /* Number of labels */
-int commandCount = 0; /* Number of commands */
-int labelFlag = 0;    /* Flag for label processing */
-int dataFlag = 0;     /* Flag for data processing */
-int commandFlag = 0;  /* Flag for command processing */
-int symbolFlag = 0;   /* Flag for symbol processing */
-int entryFlag = 0;    /* Flag for entry directive processing */
-int externFlag = 0;   /* Flag for extern directive processing */
-int lineNum = 0;      /* Current line number */
-int errorFlag = 0;    /* Flag for error detection */
-int memory[MAX_DATA]; /* Memory array for the assembler */
+int IC = 0;                 /* Instruction counter */
+int DC = 0;                 /* Data counter */
+int L = 0;                  /* Line number (not used here) */
+int symbolCount = 0;        /* Number of symbols */
+int dataCount = 0;          /* Number of data entries */
+int labelCount = 0;         /* Number of labels */
+int commandCount = 0;       /* Number of commands */
+int labelFlag = 0;          /* Flag for label processing */
+int dataFlag = 0;           /* Flag for data processing */
+int commandFlag = 0;        /* Flag for command processing */
+int symbolFlag = 0;         /* Flag for symbol processing */
+int entryFlag = 0;          /* Flag for entry directive processing */
+int externFlag = 0;         /* Flag for extern directive processing */
+int lineNum = 0;            /* Current line number */
+int errorFlag = 0;          /* Flag for error detection */
+int externalUsageCount = 0; /* External usage count */
+int memory[MAX_DATA];       /* Memory array for the assembler */
 
 MemoryEntry memoryLines[MAX_DATA];
+
+ExternalSymbolUsage externalUsages[MAX_EXTERNAL_USAGES];
 
 unsigned int memoryAddress[MAX_DATA];
 /* Data array for the assembler */
@@ -349,6 +352,20 @@ void updateSymbolValues()
     }
 }
 
+void recordExternalSymbolUsage(char *symbolName, int address)
+{
+    if (externalUsageCount < MAX_EXTERNAL_USAGES)
+    {
+        externalUsages[externalUsageCount].symbolName = strdup(symbolName);
+        externalUsages[externalUsageCount].address = address;
+        externalUsageCount++;
+    }
+    else
+    {
+        fprintf(stderr, "Reached maximum limit of external symbol usages\n");
+    }
+}
+
 /* Print the contents of the symbol table */
 void printSymbolTable()
 {
@@ -409,6 +426,15 @@ void printMemory()
     }
 }
 
+void printExternSymbolUsage()
+{
+    int i;
+    printf("External Symbol Usage:\n");
+    for (i = 0; i < externalUsageCount; i++)
+    {
+        printf("Symbol: %s, Address: %d\n", externalUsages[i].symbolName, externalUsages[i].address);
+    }
+}
 /**
  * @brief Initializes the memory lines array used in the assembler.
  *

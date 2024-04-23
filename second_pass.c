@@ -49,7 +49,10 @@ void secondPass(FILE *fp)
 
 void handleDirective(char *line)
 {
-    char *symbolName;
+    char *token, *symbolName;
+
+    token = strtok(line, " \t\n"); /* Get token */
+    printf("Directive: %s\n", token);
 
     switch (getDirectiveType(line))
     {
@@ -59,16 +62,18 @@ void handleDirective(char *line)
     case DEFINE_DIRECTIVE:
         break;
     case ENTRY_DIRECTIVE:
-        printf("ENTRY_DIRECTIVE\n");
-        symbolName = strtok(line, " \t\n");
-        printf("symbolName: %s\n", symbolName);
-        while (symbolName != NULL)
+        printf("Processing ENTRY_DIRECTIVE in second pass\n");
+        while ((symbolName = strtok(NULL, " \t\n")) != NULL) /*Fetch next tokens as symbol names*/
         {
-            if (isLabel(symbolName))
+            if (lookupSymbol(symbolName))
             {
-                printf("symbolName: %s\n", symbolName);
+                printf("Registering entry for symbol: %s\n", symbolName);
+                updateSymbolType(symbolName, entry);
             }
-            symbolName = strtok(NULL, " \t\n");
+            else
+            {
+                handleError("Symbol not found", lineNum, symbolName);
+            }
         }
         break;
     case INVALID_DIRECTIVE:

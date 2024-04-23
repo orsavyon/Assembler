@@ -156,6 +156,7 @@ void firstPass(FILE *fp)
     }
     updateSymbolValues();
     printSymbolTable();
+    printExternSymbolUsage();
     printMemory();
     printf(" --- memory lines --- \n");
     printMemoryLines();
@@ -617,6 +618,7 @@ void processExternDirective(char *line)
         if (symbol)
         {
             printf("TEST --> Symbol Found: %s\n", symbol->symbolName); /* Existing symbol found */
+            updateSymbolType(token, external);                         /* Update the symbol type to external */
         }
         else
         {
@@ -974,6 +976,7 @@ int decodeOperands(char *operands[])
             memoryLines[IC].needEncoding = 1;
             memoryLines[IC].symbol = strdup(operands[i]);
             memoryLines[IC].value = -1;
+            recordExternalSymbolUsage(operands[i], IC);
             IC++; /* Increment instruction counter */
 
             printf("TEST --> Memory[%d] = %d\n", IC, memory[IC]);

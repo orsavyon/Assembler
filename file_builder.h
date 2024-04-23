@@ -15,13 +15,27 @@
 #define BASE_4_DIGITS 7
 
 /**
-  @brief Get the IC, DC, Memory address and build an '.ob' file from them.
+  @brief Get Memory address and build an '.ob' file from them.
 
-  @param IC Instructions count.
-  @param DC Data count.
+  @param ob_filename The name of the '.ob' file.
   @param memory_address Address of first memory word.
  */
-void build_ob_file(char *, unsigned int memory_address[]);
+void createObFile(char *, unsigned int memory_address[]);
+
+/**
+ * @brief Get the entry symbols and their addresses and build an '.ent' file from them.
+ *
+ * @param ent_filename The name of the '.ent' file.
+ */
+void createEntryFile(char *ent_filename);
+
+/**
+ * @brief Get the external symbols and their addresses and build an '.ext' file from them.
+ *
+ * @param ext_filename The name of the '.ext' file.
+
+*/
+void createExtFile(char *ext_filename);
 
 /**
  * @brief Transform an decimal array to base4 array.

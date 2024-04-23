@@ -123,9 +123,21 @@ int main(int argc, char *argv[])
 
         printf("No errors detected. Output files created.\n");
         printf("TEST --> End of ob file in assembler\n");
-        build_ob_file(fileName, memoryAddress);
+        createObFile(fileName, memoryAddress);
         printf("TEST --> End of ob file in assembler\n");
-
+        dot = strrchr(fileName, '.');
+        if (dot)
+        {
+            *dot = '\0'; /** Cut off the ".am" from the file name */
+        }
+        createEntryFile(fileName);
+        printf("TEST --> End of ent file in assembler\n");
+        if (dot)
+        {
+            *dot = '\0'; /** Cut off the ".am" from the file name */
+        }
+        createExtFile(fileName);
+        printf("TEST --> End of ext file in assembler\n");
         fclose(mc);
         free(fileName);
         free(copyName);
