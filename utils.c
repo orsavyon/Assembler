@@ -151,7 +151,7 @@ void skipWhiteLines(FILE *fp)
 void handleError(const char *errorMessage, int lineNumber, char *line)
 {
     errorFlag = 1;
-    fprintf(stderr, "ERROR ____ > Error in line %d: %s\n\t%s\n", lineNumber, errorMessage, line);
+    fprintf(stderr, "ERROR >> Error in line %d: %s\n\t%s\n", lineNumber, errorMessage, line);
 }
 
 /**
@@ -244,4 +244,15 @@ int strCaseCmp(const char *s1, const char *s2)
         s2++;
     }
     return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
+}
+
+/* Function to check if a character is legal */
+int isLegalCharacter(char c)
+{
+    /* Define legal characters: alphanumeric, space, and common punctuation */
+    if (isalnum(c) || isspace(c) || strchr(",.!?;:'\"", c))
+    {
+        return 1; /* Legal */
+    }
+    return 0; /* Illegal */
 }

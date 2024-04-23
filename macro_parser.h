@@ -14,7 +14,7 @@ typedef struct Macro
 extern Macro *macroTable[MACRO_TABLE_SIZE];
 
 /* macro parser: first parse of file for macro */
-void macroParser(FILE *);
+void macroParser(FILE *, char *);
 
 /* insert macro: insert macro to file */
 

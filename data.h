@@ -18,6 +18,7 @@
 #define MAX_OPERANDS 2
 #define MAX_SYMBOLS 100
 #define MAX_RESERVED_WORDS 27
+#define MAX_FILENAME_LEN 260
 
 /* Global variables for assembler state */
 extern int IC;               /* Instruction Counter */

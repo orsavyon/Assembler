@@ -9,13 +9,14 @@ Macro *macroTable[MACRO_TABLE_SIZE];
 int hasMcr;
 
 /* macro parser: first macro parsing of file */
-void macroParser(FILE *fp)
+void macroParser(FILE *fp, char *fileName)
 {
   char line[MAX_LINE];
-  FILE *outFile = fopen("parsedMacro.asm", "w+");
+  FILE *outFile;
   Macro *mc;
   int writeLine;
   char *word, *tempLine;
+  outFile = fopen(strcat(fileName, ".am"), "w+");
   initMacroTable();
   hasMcr = 0;
   if (outFile == NULL)

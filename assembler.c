@@ -7,6 +7,7 @@
 #include "data.h"
 #include "first_pass.h"
 #include "second_pass.h"
+#include "file_builder.h"
 
 /**
  * @brief Entry point of the assembler program.
@@ -23,6 +24,7 @@ int main(int argc, char *argv[])
 {
     FILE *fp, *cp, *mc;
     int i;
+    char *fileName, *copyName, *dot;
 
     /* Check if the correct number of arguments is provided */
     if (argc < 2)
@@ -35,80 +37,98 @@ int main(int argc, char *argv[])
     for (i = 1; i < argc; i++)
     {
         /* Allocate memory for file names */
-        char *fileName = malloc(strlen(argv[i]) + 4); /* +4 for the extension and null terminator */
-        char *copyName = malloc(strlen(argv[i]) + 4);
-
+        fileName = malloc(MAX_FILENAME_LEN);
+        copyName = malloc(MAX_FILENAME_LEN);
+        if (!fileName || !copyName)
+        {
+            fprintf(stderr, "Memory allocation failed\n");
+            return 1;
+        }
         strcpy(fileName, argv[i]);
-        strcpy(copyName, fileName);
+        strcpy(copyName, argv[i]);
         strcat(copyName, ".as"); /* Append file extension */
 
         /* Open the source file for reading */
         fp = fopen(fileName, "r");
-        if (fp != NULL)
-        {
-            /* Open a new file for writing the preprocessed code */
-            if ((cp = fopen(copyName, "w+")) == NULL)
-            {
-                fprintf(stderr, "Failed to create a copy of the file.\n");
-                free(fileName);
-                fclose(fp);
-                exit(1);
-            }
-
-            else
-            {
-                /* Copy the content of the source file to the new file after preprocessing */
-                skipAndCopy(fp, cp);
-                rewind(cp);
-                fclose(fp);
-
-                /* Perform macro processing on the copied file */
-                macroParser(cp);
-
-                /* Open the file containing the macro-expanded code */
-                mc = fopen("parsedMacro.asm", "r");
-                if (mc == NULL)
-                {
-                    fprintf(stderr, "couldn't open macro file\n");
-                }
-
-                /* Print the content of the macro-expanded file (for verification/debugging) */
-                printFile(mc);
-                rewind(mc);
-                /* Perform the first pass of the assembler */
-                firstPass(mc);
-                if (errorFlag)
-                {
-                    fprintf(stderr, "Errors detected in the first pass. Exiting...\n");
-                    free(fileName);
-                    fclose(mc);
-                    fclose(cp);
-                    exit(1);
-                }
-                rewind(mc);
-                /* Perform the second pass of the assembler */
-                secondPass(mc);
-                /*Create output files ob ent ext*/
-                if (errorFlag)
-                {
-                    fprintf(stderr, "Errors detected in the second pass. Exiting...\n");
-                    free(fileName);
-                    fclose(mc);
-                    fclose(cp);
-                    exit(1);
-                }
-                else
-                {
-                    printf("No errors detected. Output files created.\n");
-                }
-
-                fclose(mc);
-            }
-        }
-        else
+        if (fp == NULL)
         {
             fprintf(stderr, "Couldn't open file: %s\n", fileName);
+            free(fileName);
+            free(copyName);
+            continue;
         }
+        /* Open a new file for writing the preprocessed code */
+        cp = fopen(copyName, "w+");
+        if (cp == NULL)
+        {
+            fprintf(stderr, "Failed to create a copy of the file.\n");
+            free(fileName);
+            fclose(fp);
+            continue;
+        }
+
+        /** Copy the content of the source file to the new file after preprocessing */
+        skipAndCopy(fp, cp);
+        rewind(cp);
+        fclose(fp); /** Close the original file after copying */
+
+        /** Perform macro processing on the copied file */
+        macroParser(cp, fileName);
+
+        /** Open the file containing the macro-expanded code */
+        mc = fopen(fileName, "r");
+        if (mc == NULL)
+        {
+            fprintf(stderr, "couldn't open macro file %s\n", fileName);
+            free(fileName);
+            free(copyName);
+            fclose(cp); /** Ensure all files are closed */
+            continue;
+        }
+
+        /** Print the content of the macro-expanded file for verification/debugging */
+        printFile(mc);
+        rewind(mc);
+        /** Perform the first pass of the assembler */
+        firstPass(mc);
+        if (errorFlag)
+        {
+            fprintf(stderr, "Errors detected in the first pass. Exiting...\n");
+            free(fileName);
+            free(copyName);
+            fclose(mc);
+            fclose(cp);
+            continue;
+        }
+        rewind(mc);
+        /* Perform the second pass of the assembler */
+        secondPass(mc);
+        /** Perform the second pass of the assembler */
+        secondPass(mc);
+        if (errorFlag)
+        {
+            fprintf(stderr, "Errors detected in the second pass. Exiting...\n");
+            free(fileName);
+            free(copyName);
+            fclose(mc);
+            fclose(cp);
+            continue;
+        }
+
+        dot = strrchr(fileName, '.');
+        if (dot)
+        {
+            *dot = '\0'; /** Cut off the ".am" from the file name */
+        }
+
+        printf("No errors detected. Output files created.\n");
+        printf("TEST --> End of ob file in assembler\n");
+        build_ob_file(fileName, memoryAddress);
+        printf("TEST --> End of ob file in assembler\n");
+
+        fclose(mc);
+        free(fileName);
+        free(copyName);
     }
 
     return 0; /* Successful termination of the program */

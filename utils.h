@@ -101,4 +101,12 @@ int isNumeric(const char *str);
  */
 int strCaseCmp(const char *s1, const char *s2);
 
+/**
+ * @brief Checks if a character is a valid character for a label.
+ *
+ * @param c The character to check.
+ * @return 1 if the character is valid, 0 otherwise.
+ */
+int isLegalCharacter(char c);
+
 #endif /* UTILS_H */

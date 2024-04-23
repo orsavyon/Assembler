@@ -450,6 +450,10 @@ void processDataDirective(char *line)
     if (strncmp(line, ".data", 5) == 0)
     {
         token = strtok(line + 6, ","); /* Start tokenizing the line after the directive */
+        if (token == NULL)
+        {
+            handleError("Missing data in .data directive", lineNum, line);
+        }
         while (token != NULL)
         {
             Symbol *symbol; /* Pointer to a symbol structure */
@@ -457,14 +461,6 @@ void processDataDirective(char *line)
             trimLine(token); /* Trim whitespace around the token */
 
             symbol = lookupSymbol(token); /* Check if the token is a known symbol */
-            if (symbol)
-            {
-                printf("TEST --> Symbol Found: %s\n", symbol->symbolName);
-            }
-            else
-            {
-                printf("TEST --> Symbol Not Found: %s\n", token);
-            }
             /* If the token is a defined symbol, store its value in memory */
             if (symbol && symbol->symbolType == mdefine)
             {
@@ -528,6 +524,12 @@ void processDataDirective(char *line)
 
             for (c = start; c < end; c++) /* Store each character of the string in memory */
             {
+                if (!isLegalCharacter(*c))
+                {
+                    handleError("Illegal character found in string\n", lineNum, line);
+                    return; /* Exit the function if illegal character is found */
+                }
+
                 printf("TEST --> Char: %c\n", *c);
                 printf("TEST --> DC: %d\n", DC);
                 memory[DC + IC] = (unsigned char)*c;
@@ -1124,6 +1126,11 @@ Addressing getAddressingMethod(char *operand)
     if (operand[0] == '#')
     {
         printf("TEST --> Immediate\n");
+        if (isspace((unsigned char)operand[1]) || operand[1] == '\0')
+        {
+            handleError("Invalid immediate value", lineNum, operand);
+            return INVALID;
+        }
         return IMMEDIATE; /* Return immediate addressing type */
     }
     /* Check for index addressing mode signified by presence of '[' and ']' */
