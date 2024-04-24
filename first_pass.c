@@ -87,7 +87,7 @@ void firstPass(FILE *fp)
                             handleError("Symbol already exists", lineNum, line); /* Error if symbol is already defined */
                         }
                     }
-                    if (errorFlag == 0) /* Process directive if no previous errors */
+                    if (lineErrorFlag == 0) /* Process directive if no previous errors */
                     {
                         processDirective(remainingLine);
                     }
@@ -104,10 +104,18 @@ void firstPass(FILE *fp)
 
                         handleError("Symbol already defined", lineNum, line);
                     }
-                    if (errorFlag == 0 && getLineType(remainingLine) == LINE_INSTRUCTION) /* Process instruction if no errors */
+                    if (lineErrorFlag == 0 && getLineType(remainingLine) == LINE_INSTRUCTION) /* Process instruction if no errors */
                     {
 
-                        processInstruction(remainingLine);
+                        if (isValidInstruction(remainingLine))
+                        {
+
+                            processInstruction(remainingLine);
+                        }
+                    }
+                    else if (getLineType(remainingLine) != LINE_INSTRUCTION)
+                    {
+                        handleError("Invalid instruction", lineNum, line);
                     }
                 }
                 else
@@ -366,7 +374,7 @@ int isValidConstantDefinition(char *line)
     /* Ensure value part is numeric and convert it */
     if (!isNumeric(valuePart))
     {
-        if (errorFlag == 0)
+        if (lineErrorFlag == 0)
         {
             handleError("Invalid constant definition: Number format error", lineNum, line);
         }
@@ -450,16 +458,24 @@ void processDataDirective(char *line)
 
     if (strncmp(line, ".data", 5) == 0)
     {
-        token = strtok(line + 6, ","); /* Start tokenizing the line after the directive */
+        /* Validate correct comma usage */
+
+        char *checkCommas = line + 6; /* Start checking after .data directive */
+        int lastCharIndex = strlen(checkCommas) - 1;
+        if (checkCommas[lastCharIndex] == ',' || strstr(checkCommas, ",,") != NULL)
+        {
+            handleError("Improper use of commas in .data directive", lineNum, line);
+            return; /* Exit if comma validation fails */
+        }
+        token = strtok(checkCommas, ","); /* Start tokenizing the line after the directive */
         if (token == NULL)
         {
             handleError("Missing data in .data directive", lineNum, line);
         }
         while (token != NULL)
         {
-            Symbol *symbol;  /* Pointer to a symbol structure */
-            trimLine(token); /* Trim whitespace around the token */
-
+            Symbol *symbol;               /* Pointer to a symbol structure */
+            trimLine(token);              /* Trim whitespace around the token */
             symbol = lookupSymbol(token); /* Check if the token is a known symbol */
             /* If the token is a defined symbol, store its value in memory */
             if (symbol && symbol->symbolType == mdefine)
@@ -469,9 +485,8 @@ void processDataDirective(char *line)
                 memoryLines[DC + IC].value = computeFourteenBitValue(symbol->value);
                 DC++;
             }
-            else if (isdigit(token[0]) || token[0] == '-' || token[0] == '+') /* If the token is a numeric value, store it directly */
+            else if (isNumeric(token)) /* If the token is a numeric value, store it directly */
             {
-
                 memory[DC + IC] = atoi(token);
 
                 memoryLines[DC + IC].value = computeFourteenBitValue(atoi(token));
@@ -700,7 +715,7 @@ void processInstruction(char *line)
     }
     else
     {
-        if (errorFlag == 0)
+        if (lineErrorFlag == 0)
         {
             handleError("Invalid instruction", lineNum, line); /* Handle invalid instruction format */
         }
@@ -860,10 +875,9 @@ Instruction *parseInstruction(char *line, Instruction *instruction)
         if (operands)
         {
             token = strtok(operands, ","); /* Tokenize the operands */
-            while (token && operandCount < MAX_OPERANDS)
+            while (token)
             {
                 trimLine(token); /* Trim whitespace around the token */
-
                 if (*token == '\0')
                 {
                     handleError("Invalid operand", lineNum, line);
@@ -878,10 +892,10 @@ Instruction *parseInstruction(char *line, Instruction *instruction)
                     return NULL; /* Return NULL if memory allocation fails for an operand */
                 }
                 operandCount++;
+
                 token = strtok(NULL, ","); /* Continue to the next operand */
             }
         }
-
         if (operandCount != expectedOperands)
         {
             handleError("Invalid number of operands", lineNum, line);

@@ -2,7 +2,7 @@
 .entry LIST
 .extern W
 .define sz = 2
-MAIN: mov r3, LIST[sz] 
+MAIN: mov r3, LIST[sz]
 LOOP: jmp W
  prn #-5
  mov STR[5], STR[2]
@@ -17,4 +17,4 @@ END: hlt
 STR: .string “abcdef”
 LIST: .data 6, -9, len
 K: .data 22
-.extern L3
+.extern L3 

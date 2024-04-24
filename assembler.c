@@ -99,7 +99,6 @@ int main(int argc, char *argv[])
             fclose(mc);
             fclose(cp);
             remove(copyName);
-            remove(fileName);
             free(fileName);
             free(copyName);
 
@@ -116,15 +115,12 @@ int main(int argc, char *argv[])
             fclose(mc);
             fclose(cp);
             remove(copyName);
-            remove(fileName);
             free(fileName);
             free(copyName);
 
             continue;
         }
-        remove(fileName);
         cutOffExtension(fileName);
-
         createObFile(fileName, memoryAddress);
         createEntryFile(fileName);
         createExtFile(fileName);
