@@ -100,6 +100,8 @@ int main(int argc, char *argv[])
             free(copyName);
             fclose(mc);
             fclose(cp);
+            remove(copyName);
+            remove(fileName);
             continue;
         }
         rewind(mc);
@@ -114,6 +116,8 @@ int main(int argc, char *argv[])
             free(copyName);
             fclose(mc);
             fclose(cp);
+            remove(copyName);
+            remove(fileName);
             continue;
         }
         remove(fileName);
