@@ -30,6 +30,7 @@ void firstPass(FILE *fp)
     /* Process each line of the source file */
     while (fgets(line, MAX_LINE_LENGTH, fp) != NULL)
     {
+        lineErrorFlag = 0; /* Reset line-specific error flag for the new line */
         lineNum++;
 
         /* Check if line exceeds the limit */
@@ -82,6 +83,7 @@ void firstPass(FILE *fp)
                         }
                         else
                         {
+
                             handleError("Symbol already exists", lineNum, line); /* Error if symbol is already defined */
                         }
                     }
@@ -99,6 +101,7 @@ void firstPass(FILE *fp)
                     }
                     else
                     {
+
                         handleError("Symbol already defined", lineNum, line);
                     }
                     if (errorFlag == 0 && getLineType(remainingLine) == LINE_INSTRUCTION) /* Process instruction if no errors */
@@ -109,6 +112,7 @@ void firstPass(FILE *fp)
                 }
                 else
                 {
+
                     handleError("Invalid line", lineNum, line);
                 }
             }
@@ -133,6 +137,7 @@ void firstPass(FILE *fp)
         }
         symbolFlag = 0; /* Reset symbol flag for next line processing */
     }
+    lineErrorFlag = 0;    /* Reset line-specific error flag */
     updateSymbolValues(); /* Update symbol values based on accumulated data and instruction counts */
 }
 
@@ -333,7 +338,9 @@ int isValidConstantDefinition(char *line)
     }
     else
     {
+
         handleError("Error: Line does not start with '.define '", lineNum, line);
+
         return 0;
     }
 
@@ -346,7 +353,9 @@ int isValidConstantDefinition(char *line)
 
     if (constantPart == NULL || valuePart == NULL)
     {
+
         handleError("Invalid constant definition: Missing '=' or incomplete definition", lineNum, line);
+
         return 0;
     }
 
@@ -357,7 +366,10 @@ int isValidConstantDefinition(char *line)
     /* Ensure value part is numeric and convert it */
     if (!isNumeric(valuePart))
     {
-        handleError("Invalid constant definition: Number format error", lineNum, line);
+        if (errorFlag == 0)
+        {
+            handleError("Invalid constant definition: Number format error", lineNum, line);
+        }
         return 0;
     }
     value = atoi(valuePart);
@@ -365,14 +377,18 @@ int isValidConstantDefinition(char *line)
     /* Check constant name for validity */
     if (isReservedWord(constantPart) || lookupSymbol(constantPart) != NULL)
     {
+
         handleError("Invalid constant definition: Reserved word used or symbol already defined", lineNum, line);
+
         return 0;
     }
 
     /* Validate the numeric value range */
     if (value < MIN_12BIT_VALUE || value > MAX_12BIT_VALUE)
     {
+
         handleError("Invalid constant definition: Value out of range", lineNum, line);
+
         return 0;
     }
 
@@ -464,6 +480,7 @@ void processDataDirective(char *line)
             }
             else /* Handle the error case where the token is neither a defined symbol nor a valid number */
             {
+
                 handleError("Undefined symbol or invalid number in .data directive\n", lineNum, line);
             }
             token = strtok(NULL, ","); /* Continue to the next token */
@@ -504,6 +521,7 @@ void processDataDirective(char *line)
             {
                 if (!isLegalCharacter(*c))
                 {
+
                     handleError("Illegal character found in string\n", lineNum, line);
                     return; /* Exit the function if illegal character is found */
                 }

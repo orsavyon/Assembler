@@ -96,12 +96,13 @@ int main(int argc, char *argv[])
         if (errorFlag)
         {
             fprintf(stderr, "Errors detected in the first pass. Exiting...\n");
-            free(fileName);
-            free(copyName);
             fclose(mc);
             fclose(cp);
             remove(copyName);
             remove(fileName);
+            free(fileName);
+            free(copyName);
+
             continue;
         }
         rewind(mc);
@@ -112,12 +113,13 @@ int main(int argc, char *argv[])
         if (errorFlag)
         {
             fprintf(stderr, "Errors detected in the second pass. Exiting...\n");
-            free(fileName);
-            free(copyName);
             fclose(mc);
             fclose(cp);
             remove(copyName);
             remove(fileName);
+            free(fileName);
+            free(copyName);
+
             continue;
         }
         remove(fileName);

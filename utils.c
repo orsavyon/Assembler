@@ -150,8 +150,12 @@ void skipWhiteLines(FILE *fp)
  */
 void handleError(const char *errorMessage, int lineNumber, char *line)
 {
-    errorFlag = 1;
-    fprintf(stderr, "ERROR >> in line %d: %s\n\t%s\n", lineNumber, errorMessage, line);
+    if (!lineErrorFlag)
+    {
+        errorFlag = 1;
+        lineErrorFlag = 1;
+        fprintf(stderr, "ERROR >> in line %d: %s\n\t%s\n", lineNumber, errorMessage, line);
+    }
 }
 
 /**

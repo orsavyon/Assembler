@@ -37,6 +37,7 @@ extern int entryFlag;          /* Flag for entry detection */
 extern int externFlag;         /* Flag for extern detection */
 extern int lineNum;            /* Current line number being processed */
 extern int errorFlag;          /* Flag for error detection */
+extern int lineErrorFlag;      /* Flag for line error detection */
 extern int externalUsageCount; /* Number of external symbols used in the program */
 extern int memory[MAX_DATA];   /* Memory array for the assembler */
 

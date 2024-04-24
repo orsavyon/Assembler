@@ -34,6 +34,7 @@ int entryFlag = 0;          /* Flag for entry directive processing */
 int externFlag = 0;         /* Flag for extern directive processing */
 int lineNum = 0;            /* Current line number */
 int errorFlag = 0;          /* Flag for error detection */
+int lineErrorFlag = 0;      /* Flag for line error detection */
 int externalUsageCount = 0; /* External usage count */
 int memory[MAX_DATA];       /* Memory array for the assembler */
 
