@@ -5,7 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Get the instructions counter, data counter, first binary memory address and build an object file. */
+/**
+  @brief Get Memory address and build an '.ob' file from them.
+
+  @param ob_filename The name of the '.ob' file.
+  @param memory_address Address of first memory word.
+ */
 void createObFile(char *ob_filename, unsigned int memory_address[])
 {
     FILE *ob_file;
@@ -35,6 +40,11 @@ void createObFile(char *ob_filename, unsigned int memory_address[])
     fclose(ob_file);
 }
 
+/**
+ * @brief Get the entry symbols and their addresses and build an '.ent' file from them.
+ *
+ * @param ent_filename The name of the '.ent' file.
+ */
 void createEntryFile(char *ent_filename)
 {
     FILE *ent_file = NULL; /* Declare file pointer */
@@ -71,7 +81,12 @@ void createEntryFile(char *ent_filename)
     }
     cutOffExtension(ent_filename);
 }
+/**
+ * @brief Get the external symbols and their addresses and build an '.ext' file from them.
+ *
+ * @param ext_filename The name of the '.ext' file.
 
+*/
 void createExtFile(char *ext_filename)
 {
     FILE *ext_file = NULL; /* Declare file pointer */
@@ -115,6 +130,12 @@ void createExtFile(char *ext_filename)
     }
     cutOffExtension(ext_filename);
 }
+
+/**
+ * @brief Transform an decimal array to base4 array.
+ *
+ * @param decimal The decimal array.
+ */
 void decimalToBase4(int decimal, int base4[])
 {
     int i;
@@ -133,7 +154,11 @@ void decimalToBase4(int decimal, int base4[])
         decimal /= 4;
     }
 }
-
+/**
+ * @brief Transform an base4 array to encoded strings array.
+ *
+ * @param base4 The base4 array.
+ */
 char *base4ToEncoded(const int base4[])
 {
     int i;

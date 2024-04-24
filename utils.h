@@ -109,6 +109,15 @@ int strCaseCmp(const char *s1, const char *s2);
  */
 int isLegalCharacter(char c);
 
+/**
+ * @brief Cuts off the extension from a given filename.
+ *
+ * This function modifies the input string by removing the extension from the filename.
+ * The extension is defined as the characters after the last dot ('.') in the filename.
+ * If no dot is found, the filename remains unchanged.
+ *
+ * @param filename The filename to remove the extension from.
+ */
 void cutOffExtension(char *filename);
 
 #endif /* UTILS_H */

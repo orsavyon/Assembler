@@ -128,6 +128,7 @@ int main(int argc, char *argv[])
         createExtFile(fileName);
         fclose(mc);
         remove(copyName);
+        freeMemoryLines();
         free(fileName);
         free(copyName);
     }

@@ -20,9 +20,12 @@ typedef enum
 } LineType;
 
 /**
- * Performs the first pass of the assembler.
+ * Performs the first pass of the assembler over the source file.
+ * This pass initializes the necessary data structures and processes each line to build the symbol table and
+ * set the initial code (IC) and data counters (DC). It handles different types of lines such as labels,
+ * directives, and instructions, and performs error checking on line lengths and definitions.
  *
- * @param fp Pointer to the source file.
+ * @param fp Pointer to the source file being read.
  */
 void firstPass(FILE *fp);
 

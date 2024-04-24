@@ -159,12 +159,26 @@ typedef struct Translation
 /* Function prototypes for operations on the assembler's data structures */
 void initData();
 
+/**
+ * @brief Retrieves the opcode corresponding to a given command name.
+ *
+ * This function searches the command table for a command matching the provided token
+ * and returns the associated opcode if found.
+ *
+ * @param token The command name to search for in the command table.
+ * @return The opcode of the command if found, or -1 if the command does not exist.
+ */
 int getOpcode(char *token); /* Get the opcode for a command */
-
+/**
+ * @brief Prints the details of an instruction to the standard output.
+ *
+ * This function displays the name and opcode of the instruction, along with any operands
+ * associated with it, if they are not NULL.
+ *
+ * @param instruction Pointer to the Instruction structure to be printed.
+ */
 void printIstruction(Instruction *instruction);
 
-/* Initialize data for assembly processing */
-void insertSymbolToTable(const char *symbolName, SymbolType symbolType, unsigned int value); /* Insert a symbol into the symbol table */
 /**
  * Generates a hash value for a symbol name.
  *
@@ -196,16 +210,30 @@ struct Symbol *lookupSymbol(const char *name);
 void addSymbol(const char *name, SymbolType type, unsigned int value);
 
 /**
- * Prints the contents of the symbol table.
+ * Prints the entire symbol table.
  */
 void printSymbolTable();
-
+/**
+ * Prints the usage of all external symbols.
+ */
 void printExternSymbolUsage();
-
+/**
+ * Updates the values of symbols in the symbol table after the first assembly pass.
+ */
 void updateSymbolValues();
-
+/**
+ * Records the usage of an external symbol at a specific address.
+ *
+ * @param symbolName The name of the external symbol used.
+ * @param address The address where the symbol is used.
+ */
 void recordExternalSymbolUsage(char *symbolName, int address);
-
+/**
+ * Updates the type of a symbol in the symbol table.
+ *
+ * @param symbolName The name of the symbol whose type is to be updated.
+ * @param type The new type for the symbol.
+ */
 void updateSymbolType(char *symbolName, int type);
 
 /**
@@ -246,7 +274,12 @@ void initMemoryLines();
  * then sets the pointer to NULL to avoid dangling references.
  */
 void freeMemoryLines();
-
+/**
+ * Prints the binary representation of a Word.
+ * The function converts the 'value' field of the Word structure into a 14-bit binary string and prints it.
+ *
+ * @param word The Word structure whose value is to be printed in binary form.
+ */
 void printWordAsBinary(const Word word);
 /**
  * @brief Sets the immediate value and ARE bits in a Word's value field.

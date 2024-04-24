@@ -223,7 +223,12 @@ void printIstruction(Instruction *instruction)
 
 Symbol *symbolTable[MAX_SYMBOLS];
 
-/* Generate a hash value for a symbol name */
+/**
+ * Generates a hash value for a symbol name.
+ *
+ * @param name The symbol name to hash.
+ * @return The hash value for the symbol name.
+ */
 unsigned int hashSymbolName(const char *name)
 {
     unsigned int hashVal = 0;
@@ -602,6 +607,12 @@ void printFirstWordAsBinary(Word word)
     printf("\n");
 }
 
+/**
+ * Prints the binary representation of a Word.
+ * The function converts the 'value' field of the Word structure into a 14-bit binary string and prints it.
+ *
+ * @param word The Word structure whose value is to be printed in binary form.
+ */
 void printWordAsBinary(Word word)
 {
     int i;

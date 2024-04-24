@@ -246,7 +246,12 @@ int strCaseCmp(const char *s1, const char *s2)
     return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
 }
 
-/* Function to check if a character is legal */
+/**
+ * @brief Checks if a character is a valid character for a label.
+ *
+ * @param c The character to check.
+ * @return 1 if the character is valid, 0 otherwise.
+ */
 int isLegalCharacter(char c)
 {
     /* Define legal characters: alphanumeric, space, and common punctuation */
@@ -257,6 +262,15 @@ int isLegalCharacter(char c)
     return 0; /* Illegal */
 }
 
+/**
+ * @brief Cuts off the extension from a given filename.
+ *
+ * This function modifies the input string by removing the extension from the filename.
+ * The extension is defined as the characters after the last dot ('.') in the filename.
+ * If no dot is found, the filename remains unchanged.
+ *
+ * @param filename The filename to remove the extension from.
+ */
 void cutOffExtension(char *filename)
 {
     char *dot = strrchr(filename, '.');
