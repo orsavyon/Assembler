@@ -26,8 +26,6 @@ void macroParser(FILE *fp, char *fileName)
     exit(1);
   }
 
-  fprintf(stdout, "\n --- in macroParser --- \n\n");
-
   while (fgets(line, MAX_LINE, fp) != NULL)
   {
     writeLine = 1;
@@ -74,7 +72,6 @@ void macroParser(FILE *fp, char *fileName)
     }
   }
 
-  printMacroTable(macroTable);
   fclose(outFile);
 }
 

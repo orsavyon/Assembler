@@ -12,12 +12,10 @@ void secondPass(FILE *fp)
     char line[MAX_LINE_LENGTH];
     lineNum = 0;
 
-    printf("\n --- in secondPass --- \n\n");
     while (fgets(line, MAX_LINE_LENGTH, fp) != NULL)
     {
         lineNum++;
         trimLine(line);
-        printf("line: %s\n", line);
 
         switch (getLineType(line))
         {
@@ -30,7 +28,6 @@ void secondPass(FILE *fp)
             break;
 
         case LINE_INSTRUCTION:
-            printf("LINE_INSTRUCTION\n");
         case LINE_LABEL:
 
             break;
@@ -39,21 +36,18 @@ void secondPass(FILE *fp)
         }
     }
     encodeRemainingInstruction();
-    printSymbolTable();
-    printMemoryLines();
     storeMemoryLine();
-    printMemoryAddress();
-    printf("IC = %d\n", IC);
-    printf("DC = %d\n", DC);
 }
 
 void handleDirective(char *line)
 {
     char *token, *symbolName;
-
-    token = strtok(line, " \t\n"); /* Get token */
-    printf("Directive: %s\n", token);
-
+    token = strtok(line, " \t\n");
+    if (token == NULL)
+    {
+        handleError("Invalid line format", lineNum, line);
+        return;
+    }
     switch (getDirectiveType(line))
     {
     case DATA_DIRECTIVE:
@@ -62,12 +56,10 @@ void handleDirective(char *line)
     case DEFINE_DIRECTIVE:
         break;
     case ENTRY_DIRECTIVE:
-        printf("Processing ENTRY_DIRECTIVE in second pass\n");
         while ((symbolName = strtok(NULL, " \t\n")) != NULL) /*Fetch next tokens as symbol names*/
         {
             if (lookupSymbol(symbolName))
             {
-                printf("Registering entry for symbol: %s\n", symbolName);
                 updateSymbolType(symbolName, entry);
             }
             else
@@ -89,11 +81,8 @@ void encodeRemainingInstruction()
     {
         if (memoryLines[i].needEncoding)
         {
-            printf("memoryLines[%d].symbol: %s\n", i, memoryLines[i].symbol);
             newValue = encodeSymbol(memoryLines[i].symbol);
-            printf("newValue: %d\n", newValue);
             memoryLines[i].value = newValue;
-            printf("memoryLines[%d].value: %d\n", i, memoryLines[i].value);
             memoryLines[i].needEncoding = 0;
         }
     }
@@ -107,11 +96,8 @@ int encodeSymbol(char *symbol)
     if (sym != NULL)
     {
 
-        printf("encodeSymbol: %s\n", symbol);
         areBits = (sym->symbolType == external) ? 0x01 : 0x02; /* ARE bits: 01 for external, 10 for relocatable */
         encodedValue = setValue(sym->value, areBits);
-        printf("encodedValue: %d \n", encodedValue);
-        printAsBinary(encodedValue);
         return encodedValue;
     }
     else

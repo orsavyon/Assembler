@@ -209,10 +209,6 @@ void recordExternalSymbolUsage(char *symbolName, int address);
 void updateSymbolType(char *symbolName, int type);
 
 /**
- * Initializes the translation table with NULL values.
- */
-void initTranslationTable();
-/**
  * @brief Checks if a given word is a reserved word in the assembler.
  *
  * This function iterates through an array of reserved words and compares each with the provided

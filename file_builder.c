@@ -11,12 +11,11 @@ void createObFile(char *ob_filename, unsigned int memory_address[])
     FILE *ob_file;
     int i;
     int base4[BASE_4_DIGITS];
-    printf("TEST --> Building ob file\n");
     strcat(ob_filename, DOT_OB_SUFFIX);
     ob_file = fopen(ob_filename, "w");
     if (ob_file == NULL)
     {
-        printf("Failed to open ob_file\n");
+        fprintf(stderr, "Failed to open file.\n");
         return;
     }
 
@@ -27,16 +26,13 @@ void createObFile(char *ob_filename, unsigned int memory_address[])
     for (i = 0; i < IC + DC; i++)
     {
 
-        printf("TEST --> Decimal: %d\n", memory_address[i]);
         decimalToBase4(memory_address[i], base4);
         fprintf(ob_file, "%04d  ", i + 100);
         fprintf(ob_file, "%4s\n", base4ToEncoded(base4));
     }
 
-    printf("TEST --> End of ob file\n");
     cutOffExtension(ob_filename);
     fclose(ob_file);
-    printf("TEST --> File %s created successfully\n", ob_filename);
 }
 
 void createEntryFile(char *ent_filename)
@@ -55,7 +51,6 @@ void createEntryFile(char *ent_filename)
             {
                 if (ent_file == NULL)
                 { /* File is opened only if an entry symbol is found */
-                    printf("TEST --> Building ent file\n");
                     strcat(ent_filename, DOT_ENT_SUFFIX);
                     ent_file = fopen(ent_filename, "w");
                     if (ent_file == NULL)
@@ -96,7 +91,6 @@ void createExtFile(char *ext_filename)
             {
                 if (ext_file == NULL)
                 { /* File is opened only if an external symbol is found */
-                    printf("TEST --> Building ext file\n");
                     ext_file = fopen(ext_filename, "w");
                     if (ext_file == NULL)
                     {
@@ -106,10 +100,8 @@ void createExtFile(char *ext_filename)
                 }
                 for (j = 0; j < externalUsageCount; j++)
                 {
-                    printf("TEST --> Comparing %s with %s\n", externalUsages[j].symbolName, current->symbolName);
                     if (strcmp(externalUsages[j].symbolName, current->symbolName) == 0)
                     {
-                        printf("TEST --> Found %s value %d\n", externalUsages[j].symbolName, externalUsages[j].address + 100);
                         fprintf(ext_file, "%-4s  %04d\n", externalUsages[j].symbolName, externalUsages[j].address + 100);
                     }
                 }

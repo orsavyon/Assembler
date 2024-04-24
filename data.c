@@ -18,31 +18,6 @@ char *registers[] = {"r1", "r2", "r3", "r4", "r5", "r6", "r7"};
 /* Table containing all commands supported by the assembler */
 Command commandTable[16];
 
-/* Table for holding translations during assembly process */
-Translation *translationTable[MAX_DATA];
-
-/* Initialize the translation table */
-void initTranslationTable()
-{
-    int i;
-    for (i = 0; i < MAX_DATA; i++)
-    {
-        translationTable[i] = NULL;
-    }
-}
-
-/* Insert a translation into the translation table */
-void addTranslationLine(int decimalAddress, Word *word)
-{
-    translationTable[decimalAddress] = (Translation *)malloc(sizeof(Translation));
-    if (translationTable[decimalAddress] == NULL)
-    {
-        fprintf(stderr, "Memory allocation error\n");
-        return;
-    }
-    translationTable[decimalAddress]->word = word;
-}
-
 /* Global variables used in the assembly process */
 int IC = 0;                 /* Instruction counter */
 int DC = 0;                 /* Data counter */
@@ -273,19 +248,15 @@ void initSymbolTable()
 struct Symbol *lookupSymbol(const char *name)
 {
     struct Symbol *sym;
-    printf("Looking up symbol: '%s'\n", name);
     sym = symbolTable[hashSymbolName(name)];
     while (sym != NULL)
     {
-        printf("Checking symbol: '%s'\n", sym->symbolName);
         if (strcmp(name, sym->symbolName) == 0)
         {
-            printf("Symbol found: '%s'\n", sym->symbolName);
             return sym;
         }
         sym = sym->next;
     }
-    printf("Symbol '%s' not found.\n", name);
     return NULL;
 }
 
@@ -295,8 +266,6 @@ void addSymbol(const char *name, SymbolType type, unsigned int value)
 {
     unsigned int hashVal;
     Symbol *sym;
-
-    printf("Inserting symbol %s to table with value %d\n", name, value);
 
     if ((sym = lookupSymbol(name)) == NULL)
     {

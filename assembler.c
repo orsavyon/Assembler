@@ -90,7 +90,6 @@ int main(int argc, char *argv[])
         }
 
         /** Print the content of the macro-expanded file for verification/debugging */
-        printFile(mc);
         rewind(mc);
         /** Perform the first pass of the assembler */
         firstPass(mc);
