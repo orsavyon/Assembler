@@ -256,3 +256,12 @@ int isLegalCharacter(char c)
     }
     return 0; /* Illegal */
 }
+
+void cutOffExtension(char *filename)
+{
+    char *dot = strrchr(filename, '.');
+    if (dot)
+    {
+        *dot = '\0';
+    }
+}

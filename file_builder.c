@@ -34,6 +34,7 @@ void createObFile(char *ob_filename, unsigned int memory_address[])
     }
 
     printf("TEST --> End of ob file\n");
+    cutOffExtension(ob_filename);
     fclose(ob_file);
     printf("TEST --> File %s created successfully\n", ob_filename);
 }
@@ -73,6 +74,7 @@ void createEntryFile(char *ent_filename)
     {
         fclose(ent_file); /* Only close the file if it was opened */
     }
+    cutOffExtension(ent_filename);
 }
 
 void createExtFile(char *ext_filename)
@@ -119,6 +121,7 @@ void createExtFile(char *ext_filename)
     {
         fclose(ext_file); /* Only close the file if it was opened */
     }
+    cutOffExtension(ext_filename);
 }
 void decimalToBase4(int decimal, int base4[])
 {

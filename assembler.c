@@ -24,13 +24,13 @@ int main(int argc, char *argv[])
 {
     FILE *fp, *cp, *mc;
     int i;
-    char *fileName, *copyName, *dot;
+    char *fileName, *copyName;
 
     /* Check if the correct number of arguments is provided */
     if (argc < 2)
     {
         fprintf(stderr, "Usage: %s <file1> <file2> ... <fileN>\n", argv[0]);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     /* Process each file provided as argument */
@@ -42,11 +42,13 @@ int main(int argc, char *argv[])
         if (!fileName || !copyName)
         {
             fprintf(stderr, "Memory allocation failed\n");
-            return 1;
+            return EXIT_FAILURE;
         }
+
         strcpy(fileName, argv[i]);
         strcpy(copyName, argv[i]);
-        strcat(copyName, ".as"); /* Append file extension */
+        strcat(fileName, EXTENTION);      /* Append file extension */
+        strcat(copyName, COPY_EXTENTION); /* Append file extension */
 
         /* Open the source file for reading */
         fp = fopen(fileName, "r");
@@ -66,6 +68,7 @@ int main(int argc, char *argv[])
             fclose(fp);
             continue;
         }
+        cutOffExtension(fileName);
 
         /** Copy the content of the source file to the new file after preprocessing */
         skipAndCopy(fp, cp);
@@ -114,34 +117,17 @@ int main(int argc, char *argv[])
             fclose(cp);
             continue;
         }
+        remove(fileName);
+        cutOffExtension(fileName);
 
-        dot = strrchr(fileName, '.');
-        if (dot)
-        {
-            *dot = '\0'; /** Cut off the ".am" from the file name */
-        }
-
-        printf("No errors detected. Output files created.\n");
-        printf("TEST --> End of ob file in assembler\n");
         createObFile(fileName, memoryAddress);
-        printf("TEST --> End of ob file in assembler\n");
-        dot = strrchr(fileName, '.');
-        if (dot)
-        {
-            *dot = '\0'; /** Cut off the ".am" from the file name */
-        }
         createEntryFile(fileName);
-        printf("TEST --> End of ent file in assembler\n");
-        if (dot)
-        {
-            *dot = '\0'; /** Cut off the ".am" from the file name */
-        }
         createExtFile(fileName);
-        printf("TEST --> End of ext file in assembler\n");
         fclose(mc);
+        remove(copyName);
         free(fileName);
         free(copyName);
     }
 
-    return 0; /* Successful termination of the program */
+    return EXIT_SUCCESS; /* Successful termination of the program */
 }

@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "utils.h"
+#include "data.h"
 
 #include "macro_parser.h"
 
@@ -48,6 +49,12 @@ void macroParser(FILE *fp, char *fileName)
           fprintf(stderr, "Duplicate macro name\n");
           exit(1);
         }
+        else if (isReservedWord(word))
+        {
+          fprintf(stderr, "Reserved word cannot be used as macro name\n");
+          exit(1);
+        }
+
         else
         {
           hasMcr = 1;
@@ -68,7 +75,6 @@ void macroParser(FILE *fp, char *fileName)
   }
 
   printMacroTable(macroTable);
-  fprintf(stdout, "\n --- out macroParser --- \n\n");
   fclose(outFile);
 }
 

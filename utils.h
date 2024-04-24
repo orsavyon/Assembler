@@ -109,4 +109,6 @@ int strCaseCmp(const char *s1, const char *s2);
  */
 int isLegalCharacter(char c);
 
+void cutOffExtension(char *filename);
+
 #endif /* UTILS_H */
