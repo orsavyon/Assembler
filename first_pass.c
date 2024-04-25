@@ -36,7 +36,11 @@ void firstPass(FILE *fp)
         /* Check if line exceeds the limit */
         if (strlen(line) == MAX_LINE_LENGTH - 1 && line[MAX_LINE_LENGTH - 2] != '\n')
         {
+            int ch;
             handleError("Line length exceeds the limit", lineNum, line);
+            while ((ch = fgetc(fp)) != '\n' && ch != EOF)
+                ;
+
             continue;
         }
 
@@ -458,11 +462,16 @@ void processDataDirective(char *line)
 
     if (strncmp(line, ".data", 5) == 0)
     {
+        char buffer[MAX_LINE_LENGTH]; /* Ensure the buffer is large enough for your lines */
+        char *checkCommas;
+        int lastCharIndex;
+        strcpy(buffer, line);
         /* Validate correct comma usage */
+        checkCommas = buffer + 6; /* Start checking after .data directive */
+        trimLine(checkCommas);    /* Trim whitespace around the line */
+        lastCharIndex = strlen(checkCommas) - 1;
 
-        char *checkCommas = line + 6; /* Start checking after .data directive */
-        int lastCharIndex = strlen(checkCommas) - 1;
-        if (checkCommas[lastCharIndex] == ',' || strstr(checkCommas, ",,") != NULL)
+        if (checkCommas[0] == ',' || checkCommas[lastCharIndex] == ',' || strstr(checkCommas, ",,") != NULL)
         {
             handleError("Improper use of commas in .data directive", lineNum, line);
             return; /* Exit if comma validation fails */
@@ -495,8 +504,7 @@ void processDataDirective(char *line)
             }
             else /* Handle the error case where the token is neither a defined symbol nor a valid number */
             {
-
-                handleError("Undefined symbol or invalid number in .data directive\n", lineNum, line);
+                handleError("Undefined symbol or invalid number in .data directive", lineNum, line);
             }
             token = strtok(NULL, ","); /* Continue to the next token */
         }
@@ -537,7 +545,7 @@ void processDataDirective(char *line)
                 if (!isLegalCharacter(*c))
                 {
 
-                    handleError("Illegal character found in string\n", lineNum, line);
+                    handleError("Illegal character found in string", lineNum, line);
                     return; /* Exit the function if illegal character is found */
                 }
 
@@ -852,6 +860,7 @@ Instruction *parseInstruction(char *line, Instruction *instruction)
         int expectedOperands;
         int operandCount = 0;
         char *operands;
+        int len;
         char *token = strtok(buffer, " \t"); /* Tokenize the line to extract the instruction name */
                                              /* Counter for operands */
         if (!token)
@@ -874,6 +883,24 @@ Instruction *parseInstruction(char *line, Instruction *instruction)
 
         if (operands)
         {
+
+            trimLine(operands); /* Trim whitespace around the operands */
+            len = strlen(operands);
+            /* Check for leading, trailing commas or double commas */
+            if (*operands == ',' || operands[len - 1] == ',' || strstr(operands, ",,") != NULL)
+            {
+                handleError("Improper use of commas in operands", lineNum, line);
+                free(buffer);
+                return NULL;
+            }
+            /* Extra check for missing comma if exactly two operands are expected */
+            if (expectedOperands == 2 && (strchr(operands, ',') == NULL))
+            {
+                handleError("Missing comma between operands", lineNum, line);
+                free(buffer);
+                return NULL;
+            }
+
             token = strtok(operands, ","); /* Tokenize the operands */
             while (token)
             {
@@ -1117,9 +1144,17 @@ Addressing getAddressingMethod(char *operand)
         return INDEX; /* Return index addressing type */
     }
     /* Check for register addressing mode signified by 'r' followed by a digit */
-    if (operand[0] == 'r' && isdigit(operand[1]))
+    if (operand[0] == 'r')
     {
-        return REGISTER; /* Return register addressing type */
+        if (operand[1] >= '0' && operand[1] <= '7' && (operand[2] == '\0' || isspace((unsigned char)operand[2]) || operand[2] == ','))
+        {
+            return REGISTER; /* Return register addressing type */
+        }
+        else
+        {
+            handleError("Invalid register value", lineNum, operand);
+            return INVALID;
+        }
     }
     /* If none of the above, assume direct addressing */
     return DIRECT; /* Return direct addressing type */

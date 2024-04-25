@@ -68,7 +68,7 @@ J: undefaction r1
 K: mov       r1,        r2
 
 ; Using a decimal number
-L: .data 5.5
+L: .data 5.5, 7
 
 ; Invalid characters in labels
 M@: clr @r1

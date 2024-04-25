@@ -1,4 +1,3 @@
-; file ps.as
 .entry LIST
 .extern W
 .define sz = 2
@@ -14,7 +13,7 @@ L1: inc L3
  bne LOOP
 END: hlt
 .define len = 4
-STR: .string “abcdef”
+STR: .string “abc%%ef”
 LIST: .data  6, -9, len
 K: .data 22
 .extern L3 
