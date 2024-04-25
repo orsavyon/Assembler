@@ -432,6 +432,8 @@ void processDirective(char *line)
         break;
     case DEFINE_DIRECTIVE:
     case ENTRY_DIRECTIVE:
+        /* Add symbol declared as an entry to the record list */
+        processEntryDirective(line);
         break;
     case EXTERN_DIRECTIVE:
         if (symbolFlag == 1) /* Check condition based on symbolFlag */
@@ -621,16 +623,23 @@ DirectiveType getDirectiveType(char *line)
 
 void processExternDirective(char *line)
 {
-
-    char *token;                   /* Token for parsing symbols from the directive */
-    token = strtok(line + 7, ","); /* Begin tokenizing after the directive keyword */
+    char buffer[MAX_LINE_LENGTH];    /* Buffer to store the line */
+    char *token;                     /* Token for parsing symbols from the directive */
+    strcpy(buffer, line);            /* Copy the line to the buffer */
+    token = strtok(buffer + 7, ","); /* Begin tokenizing after the directive keyword */
 
     /* Iterate through tokens representing symbols */
     while (token != NULL)
     {
         Symbol *symbol;  /* Pointer to a symbol structure */
         trimLine(token); /* Trim whitespace around the token */
-
+        /* Check if the token is already marked as an entry label */
+        if (isEntryLabel(token))
+        {
+            /* Handle the error and exit processing for this line */
+            handleError("Cannot declare entry label as external", lineNum, line);
+            return; /* Exit the function early */
+        }
         symbol = lookupSymbol(token); /* Check if the symbol is already in the table */
         if (symbol)
         {
@@ -643,6 +652,35 @@ void processExternDirective(char *line)
         token = strtok(NULL, ","); /* Continue to the next token */
     }
 }
+
+/**
+ * Processes a line designated as an entry directive in assembly source code.
+ * It also ensures that duplicate entry declarations are handled appropriately by checking
+ * against the existing list of entry labels.
+ *
+ * @param line A character pointer to the entry directive line to be processed.
+ */
+void processEntryDirective(char *line)
+{
+    /* Begin tokenizing after the directive keyword */
+    char *token = strtok(line + 7, ",");
+
+    /* Iterate through tokens representing symbols */
+    while (token != NULL)
+    {
+        trimLine(token); /* Trim whitespace around the token */
+        if (!isEntryLabel(token))
+        {
+            addEntryLabel(token); /* Add the symbol as an entry label */
+        }
+        else
+        {
+            handleError("Entry label already declared", lineNum, line);
+        }
+        token = strtok(NULL, ","); /* Continue to the next token */
+    }
+}
+
 /* ############################### end LINE_DIRECTIVE code ############################### */
 
 /* ############################### start LINE_INSTRUCTION code ############################### */
