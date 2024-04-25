@@ -37,7 +37,9 @@ extern int entryFlag;          /* Flag for entry detection */
 extern int externFlag;         /* Flag for extern detection */
 extern int lineNum;            /* Current line number being processed */
 extern int errorFlag;          /* Flag for error detection */
+extern int lineErrorFlag;      /* Flag for line error detection */
 extern int externalUsageCount; /* Number of external symbols used in the program */
+extern int entryCount;         /* Tracker for the number of entry symbols */
 extern int memory[MAX_DATA];   /* Memory array for the assembler */
 
 /* Array of saved words used by the assembler */
@@ -126,6 +128,8 @@ typedef struct externalSymbolUsage
     int address;
 } ExternalSymbolUsage;
 extern ExternalSymbolUsage externalUsages[MAX_EXTERNAL_USAGES];
+
+extern char *entrySymbols[MAX_SYMBOLS]; /* Array of entry symbols */
 
 /* Structure defining a symbol in the symbol table */
 typedef struct Symbol
@@ -218,7 +222,8 @@ void printSymbolTable();
  */
 void printExternSymbolUsage();
 /**
- * Updates the values of symbols in the symbol table after the first assembly pass.
+ * Updates the values of all symbols of type 'data' in the symbol table.
+ * The new value is calculated based on a global counter `IC`.
  */
 void updateSymbolValues();
 /**
@@ -228,6 +233,22 @@ void updateSymbolValues();
  * @param address The address where the symbol is used.
  */
 void recordExternalSymbolUsage(char *symbolName, int address);
+
+/**
+ * Adds a label to the entrySymbols array.
+ * Assumes the label does not already exist in the array.
+ *
+ * @param label The label to add.
+ */
+void addEntryLabel(char *label);
+
+/**
+ * Checks if a label is already an entry label.
+ *
+ * @param label The label to check.
+ * @return True if the label is found, False otherwise.
+ */
+int isEntryLabel(char *label);
 /**
  * Updates the type of a symbol in the symbol table.
  *

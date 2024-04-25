@@ -115,7 +115,14 @@ void processDirective(char *line);
  */
 
 void processExternDirective(char *line);
-
+/**
+ * Processes a line designated as an entry directive in assembly source code.
+ * It also ensures that duplicate entry declarations are handled appropriately by checking
+ * against the existing list of entry labels.
+ *
+ * @param line A character pointer to the entry directive line to be processed.
+ */
+void processEntryDirective(char *line);
 /**
  * Processes lines containing data or string directives in an assembly program.
  * This function parses the line to extract and handle numerical data or string literals based on the directive type.

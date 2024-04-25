@@ -17,9 +17,11 @@ void secondPass(FILE *fp)
 {
     char line[MAX_LINE_LENGTH]; /* Buffer to store each line from the file */
     lineNum = 0;                /* Reset line number counter for accurate error reporting */
+                                /* Reset line error flag */
 
     while (fgets(line, MAX_LINE_LENGTH, fp) != NULL) /* Read each line until the end of the file */
     {
+        lineErrorFlag = 0;
         lineNum++;      /* Increment line number with each new line */
         trimLine(line); /* Remove leading and trailing whitespace */
 
@@ -73,9 +75,17 @@ void handleDirective(char *line)
         /* Process each symbol declared as an entry */
         while ((symbolName = strtok(NULL, " \t\n")) != NULL) /*Fetch next tokens as symbol names*/
         {
-            if (lookupSymbol(symbolName)) /* Check if symbol is already defined */
+            Symbol *sym = lookupSymbol(symbolName); /* Look up the symbol in the symbol table */
+            if (sym)                                /* Check if symbol is already defined */
             {
-                updateSymbolType(symbolName, entry);
+                if (sym->symbolType == external)
+                {
+                    handleError("Cannot declare external symbol as entry", lineNum, symbolName); /* Handle error if symbol is external */
+                }
+                else
+                {
+                    updateSymbolType(symbolName, entry);
+                }
             }
             else
             {

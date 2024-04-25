@@ -34,12 +34,17 @@ int entryFlag = 0;          /* Flag for entry directive processing */
 int externFlag = 0;         /* Flag for extern directive processing */
 int lineNum = 0;            /* Current line number */
 int errorFlag = 0;          /* Flag for error detection */
+int lineErrorFlag = 0;      /* Flag for line error detection */
 int externalUsageCount = 0; /* External usage count */
 int memory[MAX_DATA];       /* Memory array for the assembler */
 
 MemoryEntry memoryLines[MAX_DATA];
 
 ExternalSymbolUsage externalUsages[MAX_EXTERNAL_USAGES];
+
+char *entrySymbols[MAX_SYMBOLS]; /* Array of entry symbols */
+
+int entryCount = 0; /* Tracker for the number of entry symbols */
 
 unsigned int memoryAddress[MAX_DATA];
 /* Data array for the assembler */
@@ -220,7 +225,6 @@ void printIstruction(Instruction *instruction)
 }
 
 /* Table containing all symbols found by the assembler */
-
 Symbol *symbolTable[MAX_SYMBOLS];
 
 /**
@@ -239,7 +243,9 @@ unsigned int hashSymbolName(const char *name)
     return hashVal % MAX_SYMBOLS;
 }
 
-/* Initialize the symbol table */
+/**
+ * Initializes the symbol table by setting all entries to NULL.
+ */
 void initSymbolTable()
 {
     int i;
@@ -249,7 +255,12 @@ void initSymbolTable()
     }
 }
 
-/* Look up a symbol in the symbol table */
+/**
+ * Looks up a symbol in the symbol table.
+ *
+ * @param name The name of the symbol to find.
+ * @return A pointer to the found symbol or NULL if not found.
+ */
 struct Symbol *lookupSymbol(const char *name)
 {
     struct Symbol *sym;
@@ -265,8 +276,13 @@ struct Symbol *lookupSymbol(const char *name)
     return NULL;
 }
 
-/* Add a symbol to the symbol table */
-
+/**
+ * Adds a symbol to the symbol table.
+ *
+ * @param name The name of the symbol to add.
+ * @param type The type of the symbol.
+ * @param value The value of the symbol.
+ */
 void addSymbol(const char *name, SymbolType type, unsigned int value)
 {
     unsigned int hashVal;
@@ -291,8 +307,13 @@ void addSymbol(const char *name, SymbolType type, unsigned int value)
         fprintf(stderr, "%s already exists in the symbol table\n", name);
     }
 }
-/* Update a the given symbol's type */
 
+/**
+ * Updates the type of a symbol in the symbol table.
+ *
+ * @param symbolName The name of the symbol whose type is to be updated.
+ * @param type The new type for the symbol.
+ */
 void updateSymbolType(char *symbolName, int type)
 {
     Symbol *sym;
@@ -307,7 +328,10 @@ void updateSymbolType(char *symbolName, int type)
     }
 }
 
-/* Update a symbol's value */
+/**
+ * Updates the values of all symbols of type 'data' in the symbol table.
+ * The new value is calculated based on a global counter `IC`.
+ */
 void updateSymbolValues()
 {
     int i;
@@ -326,6 +350,12 @@ void updateSymbolValues()
     }
 }
 
+/**
+ * Records the usage of an external symbol at a specific address.
+ *
+ * @param symbolName The name of the external symbol used.
+ * @param address The address where the symbol is used.
+ */
 void recordExternalSymbolUsage(char *symbolName, int address)
 {
     if (externalUsageCount < MAX_EXTERNAL_USAGES)
@@ -338,6 +368,45 @@ void recordExternalSymbolUsage(char *symbolName, int address)
     {
         fprintf(stderr, "Reached maximum limit of external symbol usages\n");
     }
+}
+
+/**
+ * Adds a label to the entrySymbols array.
+ * Assumes the label does not already exist in the array.
+ *
+ * @param label The label to add.
+ */
+void addEntryLabel(char *label)
+{
+    if (entryCount < MAX_SYMBOLS)
+    {
+        entrySymbols[entryCount] = strdup(label); /* Duplicate and store the label */
+        entryCount++;                             /* Increment the count of stored labels */
+    }
+    else
+    {
+        /* Handle the case where the symbol limit is reached */
+        fprintf(stderr, "Maximum number of entry symbols reached.\n");
+    }
+}
+
+/**
+ * Checks if a label is already an entry label.
+ *
+ * @param label The label to check.
+ * @return True if the label is found, False otherwise.
+ */
+int isEntryLabel(char *label)
+{
+    int i;
+    for (i = 0; i < entryCount; i++)
+    {
+        if (strcmp(entrySymbols[i], label) == 0)
+        {
+            return 1; /* Label found */
+        }
+    }
+    return 0; /* Label not found */
 }
 
 /* Print the contents of the symbol table */

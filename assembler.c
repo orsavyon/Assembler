@@ -12,12 +12,14 @@
 /**
  * @brief Entry point of the assembler program.
  *
- * Processes each file provided as command-line argument by performing macro processing
- * and the first pass of the assembler.
+ * Processes each file provided as a command-line argument by performing the following steps:
+ * - Macro processing: Preprocesses the file to expand macros.
+ * - First Pass: Generates a symbol table and calculates memory addresses.
+ * - Second Pass: Generates machine code using the symbol table and addresses determined in the first pass.
  *
  * @param argc Number of command-line arguments.
- * @param argv Array of command-line arguments.
- * @return int Program exit status.
+ * @param argv Array of command-line arguments including program name and input files.
+ * @return int Returns EXIT_SUCCESS if all files are processed without errors; otherwise, may exit with EXIT_FAILURE upon severe errors.
  */
 
 int main(int argc, char *argv[])
@@ -50,7 +52,7 @@ int main(int argc, char *argv[])
         strcat(fileName, EXTENTION);      /* Append file extension */
         strcat(copyName, COPY_EXTENTION); /* Append file extension */
 
-        /* Open the source file for reading */
+        /* Open the source file for reading. If the file cannot be opened, skip to the next file. */
         fp = fopen(fileName, "r");
         if (fp == NULL)
         {
@@ -96,12 +98,12 @@ int main(int argc, char *argv[])
         if (errorFlag)
         {
             fprintf(stderr, "Errors detected in the first pass. Exiting...\n");
-            free(fileName);
-            free(copyName);
             fclose(mc);
             fclose(cp);
             remove(copyName);
-            remove(fileName);
+            free(fileName);
+            free(copyName);
+
             continue;
         }
         rewind(mc);
@@ -112,23 +114,21 @@ int main(int argc, char *argv[])
         if (errorFlag)
         {
             fprintf(stderr, "Errors detected in the second pass. Exiting...\n");
-            free(fileName);
-            free(copyName);
             fclose(mc);
             fclose(cp);
             remove(copyName);
-            remove(fileName);
+            free(fileName);
+            free(copyName);
+
             continue;
         }
-        remove(fileName);
         cutOffExtension(fileName);
-
-        createObFile(fileName, memoryAddress);
-        createEntryFile(fileName);
-        createExtFile(fileName);
-        fclose(mc);
-        remove(copyName);
-        freeMemoryLines();
+        createObFile(fileName, memoryAddress); /* Create the object file */
+        createEntryFile(fileName);             /* Create the entry file */
+        createExtFile(fileName);               /* Create the external file */
+        fclose(mc);                            /* Close the macro file */
+        remove(copyName);                      /* Remove the copy file */
+        freeMemoryLines();                     /* Free memory allocated for memory lines */
         free(fileName);
         free(copyName);
     }

@@ -30,12 +30,17 @@ void firstPass(FILE *fp)
     /* Process each line of the source file */
     while (fgets(line, MAX_LINE_LENGTH, fp) != NULL)
     {
+        lineErrorFlag = 0; /* Reset line-specific error flag for the new line */
         lineNum++;
 
         /* Check if line exceeds the limit */
         if (strlen(line) == MAX_LINE_LENGTH - 1 && line[MAX_LINE_LENGTH - 2] != '\n')
         {
+            int ch;
             handleError("Line length exceeds the limit", lineNum, line);
+            while ((ch = fgetc(fp)) != '\n' && ch != EOF)
+                ;
+
             continue;
         }
 
@@ -82,10 +87,11 @@ void firstPass(FILE *fp)
                         }
                         else
                         {
+
                             handleError("Symbol already exists", lineNum, line); /* Error if symbol is already defined */
                         }
                     }
-                    if (errorFlag == 0) /* Process directive if no previous errors */
+                    if (lineErrorFlag == 0) /* Process directive if no previous errors */
                     {
                         processDirective(remainingLine);
                     }
@@ -99,16 +105,26 @@ void firstPass(FILE *fp)
                     }
                     else
                     {
+
                         handleError("Symbol already defined", lineNum, line);
                     }
-                    if (errorFlag == 0 && getLineType(remainingLine) == LINE_INSTRUCTION) /* Process instruction if no errors */
+                    if (lineErrorFlag == 0 && getLineType(remainingLine) == LINE_INSTRUCTION) /* Process instruction if no errors */
                     {
 
-                        processInstruction(remainingLine);
+                        if (isValidInstruction(remainingLine))
+                        {
+
+                            processInstruction(remainingLine);
+                        }
+                    }
+                    else if (getLineType(remainingLine) != LINE_INSTRUCTION)
+                    {
+                        handleError("Invalid instruction", lineNum, line);
                     }
                 }
                 else
                 {
+
                     handleError("Invalid line", lineNum, line);
                 }
             }
@@ -133,6 +149,7 @@ void firstPass(FILE *fp)
         }
         symbolFlag = 0; /* Reset symbol flag for next line processing */
     }
+    lineErrorFlag = 0;    /* Reset line-specific error flag */
     updateSymbolValues(); /* Update symbol values based on accumulated data and instruction counts */
 }
 
@@ -333,7 +350,9 @@ int isValidConstantDefinition(char *line)
     }
     else
     {
+
         handleError("Error: Line does not start with '.define '", lineNum, line);
+
         return 0;
     }
 
@@ -346,7 +365,9 @@ int isValidConstantDefinition(char *line)
 
     if (constantPart == NULL || valuePart == NULL)
     {
+
         handleError("Invalid constant definition: Missing '=' or incomplete definition", lineNum, line);
+
         return 0;
     }
 
@@ -357,7 +378,10 @@ int isValidConstantDefinition(char *line)
     /* Ensure value part is numeric and convert it */
     if (!isNumeric(valuePart))
     {
-        handleError("Invalid constant definition: Number format error", lineNum, line);
+        if (lineErrorFlag == 0)
+        {
+            handleError("Invalid constant definition: Number format error", lineNum, line);
+        }
         return 0;
     }
     value = atoi(valuePart);
@@ -365,14 +389,18 @@ int isValidConstantDefinition(char *line)
     /* Check constant name for validity */
     if (isReservedWord(constantPart) || lookupSymbol(constantPart) != NULL)
     {
+
         handleError("Invalid constant definition: Reserved word used or symbol already defined", lineNum, line);
+
         return 0;
     }
 
     /* Validate the numeric value range */
     if (value < MIN_12BIT_VALUE || value > MAX_12BIT_VALUE)
     {
+
         handleError("Invalid constant definition: Value out of range", lineNum, line);
+
         return 0;
     }
 
@@ -404,6 +432,8 @@ void processDirective(char *line)
         break;
     case DEFINE_DIRECTIVE:
     case ENTRY_DIRECTIVE:
+        /* Add symbol declared as an entry to the record list */
+        processEntryDirective(line);
         break;
     case EXTERN_DIRECTIVE:
         if (symbolFlag == 1) /* Check condition based on symbolFlag */
@@ -434,16 +464,29 @@ void processDataDirective(char *line)
 
     if (strncmp(line, ".data", 5) == 0)
     {
-        token = strtok(line + 6, ","); /* Start tokenizing the line after the directive */
+        char buffer[MAX_LINE_LENGTH]; /* Ensure the buffer is large enough for your lines */
+        char *checkCommas;
+        int lastCharIndex;
+        strcpy(buffer, line);
+        /* Validate correct comma usage */
+        checkCommas = buffer + 6; /* Start checking after .data directive */
+        trimLine(checkCommas);    /* Trim whitespace around the line */
+        lastCharIndex = strlen(checkCommas) - 1;
+
+        if (checkCommas[0] == ',' || checkCommas[lastCharIndex] == ',' || strstr(checkCommas, ",,") != NULL)
+        {
+            handleError("Improper use of commas in .data directive", lineNum, line);
+            return; /* Exit if comma validation fails */
+        }
+        token = strtok(checkCommas, ","); /* Start tokenizing the line after the directive */
         if (token == NULL)
         {
             handleError("Missing data in .data directive", lineNum, line);
         }
         while (token != NULL)
         {
-            Symbol *symbol;  /* Pointer to a symbol structure */
-            trimLine(token); /* Trim whitespace around the token */
-
+            Symbol *symbol;               /* Pointer to a symbol structure */
+            trimLine(token);              /* Trim whitespace around the token */
             symbol = lookupSymbol(token); /* Check if the token is a known symbol */
             /* If the token is a defined symbol, store its value in memory */
             if (symbol && symbol->symbolType == mdefine)
@@ -453,9 +496,8 @@ void processDataDirective(char *line)
                 memoryLines[DC + IC].value = computeFourteenBitValue(symbol->value);
                 DC++;
             }
-            else if (isdigit(token[0]) || token[0] == '-' || token[0] == '+') /* If the token is a numeric value, store it directly */
+            else if (isNumeric(token)) /* If the token is a numeric value, store it directly */
             {
-
                 memory[DC + IC] = atoi(token);
 
                 memoryLines[DC + IC].value = computeFourteenBitValue(atoi(token));
@@ -464,7 +506,7 @@ void processDataDirective(char *line)
             }
             else /* Handle the error case where the token is neither a defined symbol nor a valid number */
             {
-                handleError("Undefined symbol or invalid number in .data directive\n", lineNum, line);
+                handleError("Undefined symbol or invalid number in .data directive", lineNum, line);
             }
             token = strtok(NULL, ","); /* Continue to the next token */
         }
@@ -504,7 +546,8 @@ void processDataDirective(char *line)
             {
                 if (!isLegalCharacter(*c))
                 {
-                    handleError("Illegal character found in string\n", lineNum, line);
+
+                    handleError("Illegal character found in string", lineNum, line);
                     return; /* Exit the function if illegal character is found */
                 }
 
@@ -580,16 +623,26 @@ DirectiveType getDirectiveType(char *line)
 
 void processExternDirective(char *line)
 {
-
-    char *token;                   /* Token for parsing symbols from the directive */
-    token = strtok(line + 7, ","); /* Begin tokenizing after the directive keyword */
-
+    char buffer[MAX_LINE_LENGTH];    /* Buffer to store the line */
+    char *token;                     /* Token for parsing symbols from the directive */
+    strcpy(buffer, line);            /* Copy the line to the buffer */
+    token = strtok(buffer + 7, ","); /* Begin tokenizing after the directive keyword */
+    if (token == NULL)
+    {
+        handleError("Missing symbol in .extern directive", lineNum, line);
+    }
     /* Iterate through tokens representing symbols */
     while (token != NULL)
     {
         Symbol *symbol;  /* Pointer to a symbol structure */
         trimLine(token); /* Trim whitespace around the token */
-
+        /* Check if the token is already marked as an entry label */
+        if (isEntryLabel(token))
+        {
+            /* Handle the error and exit processing for this line */
+            handleError("Cannot declare entry label as external", lineNum, line);
+            return; /* Exit the function early */
+        }
         symbol = lookupSymbol(token); /* Check if the symbol is already in the table */
         if (symbol)
         {
@@ -602,6 +655,44 @@ void processExternDirective(char *line)
         token = strtok(NULL, ","); /* Continue to the next token */
     }
 }
+
+/**
+ * Processes a line designated as an entry directive in assembly source code.
+ * It also ensures that duplicate entry declarations are handled appropriately by checking
+ * against the existing list of entry labels.
+ *
+ * @param line A character pointer to the entry directive line to be processed.
+ */
+void processEntryDirective(char *line)
+{
+    char buffer[MAX_LINE_LENGTH]; /* Buffer to store the line */
+    char *token;
+    strcpy(buffer, line); /* Copy the line to the buffer */
+    trimLine(buffer);     /* Trim whitespace around the line */
+    token = strtok(buffer + 7, ", \t");
+
+    /* Begin tokenizing after the directive keyword */
+    if (token == NULL) /* Check if the token is missing */
+    {
+        handleError("Missing symbol in .entry directive", lineNum, line);
+    }
+
+    /* Iterate through tokens representing symbols */
+    while (token != NULL)
+    {
+        trimLine(token); /* Trim whitespace around the token */
+        if (!isEntryLabel(token))
+        {
+            addEntryLabel(token); /* Add the symbol as an entry label */
+        }
+        else
+        {
+            handleError("Entry label already declared", lineNum, line);
+        }
+        token = strtok(NULL, ","); /* Continue to the next token */
+    }
+}
+
 /* ############################### end LINE_DIRECTIVE code ############################### */
 
 /* ############################### start LINE_INSTRUCTION code ############################### */
@@ -682,7 +773,7 @@ void processInstruction(char *line)
     }
     else
     {
-        if (errorFlag == 0)
+        if (lineErrorFlag == 0)
         {
             handleError("Invalid instruction", lineNum, line); /* Handle invalid instruction format */
         }
@@ -819,6 +910,7 @@ Instruction *parseInstruction(char *line, Instruction *instruction)
         int expectedOperands;
         int operandCount = 0;
         char *operands;
+        int len;
         char *token = strtok(buffer, " \t"); /* Tokenize the line to extract the instruction name */
                                              /* Counter for operands */
         if (!token)
@@ -841,11 +933,28 @@ Instruction *parseInstruction(char *line, Instruction *instruction)
 
         if (operands)
         {
+
+            trimLine(operands); /* Trim whitespace around the operands */
+            len = strlen(operands);
+            /* Check for leading, trailing commas or double commas */
+            if (*operands == ',' || operands[len - 1] == ',' || strstr(operands, ",,") != NULL)
+            {
+                handleError("Improper use of commas in operands", lineNum, line);
+                free(buffer);
+                return NULL;
+            }
+            /* Extra check for missing comma if exactly two operands are expected */
+            if (expectedOperands == 2 && (strchr(operands, ',') == NULL))
+            {
+                handleError("Missing comma between operands", lineNum, line);
+                free(buffer);
+                return NULL;
+            }
+
             token = strtok(operands, ","); /* Tokenize the operands */
-            while (token && operandCount < MAX_OPERANDS)
+            while (token)
             {
                 trimLine(token); /* Trim whitespace around the token */
-
                 if (*token == '\0')
                 {
                     handleError("Invalid operand", lineNum, line);
@@ -860,10 +969,10 @@ Instruction *parseInstruction(char *line, Instruction *instruction)
                     return NULL; /* Return NULL if memory allocation fails for an operand */
                 }
                 operandCount++;
+
                 token = strtok(NULL, ","); /* Continue to the next operand */
             }
         }
-
         if (operandCount != expectedOperands)
         {
             handleError("Invalid number of operands", lineNum, line);
@@ -973,7 +1082,6 @@ int decodeOperands(char *operands[])
                 {
                     strncpy(index, start + 1, length);
                     index[length] = '\0';
-
                     if (isNumeric(index))
                     {
                         value = atoi(index);
@@ -986,14 +1094,7 @@ int decodeOperands(char *operands[])
                         memoryLines[IC].value = value;
                         IC++;
                     }
-                    else if (lookupSymbol(index) == NULL)
-                    {
-                        memory[IC] = -1;
-                        memoryLines[IC].type = INDEX_ADDRESSING;
-                        memoryLines[IC].value = -1;
-                        IC++;
-                    }
-                    else
+                    else if (lookupSymbol(index) != NULL)
                     {
                         value = lookupSymbol(index)->value;
                         memset(&word, 0, sizeof(word));
@@ -1005,6 +1106,10 @@ int decodeOperands(char *operands[])
                         memoryLines[IC].type = INDEX_ADDRESSING_VALUE;
                         memoryLines[IC].value = value;
                         IC++;
+                    }
+                    else
+                    {
+                        handleError("Invalid index value", lineNum, index);
                     }
                 }
             }
@@ -1085,9 +1190,17 @@ Addressing getAddressingMethod(char *operand)
         return INDEX; /* Return index addressing type */
     }
     /* Check for register addressing mode signified by 'r' followed by a digit */
-    if (operand[0] == 'r' && isdigit(operand[1]))
+    if (operand[0] == 'r')
     {
-        return REGISTER; /* Return register addressing type */
+        if (operand[1] >= '0' && operand[1] <= '7' && (operand[2] == '\0' || isspace((unsigned char)operand[2]) || operand[2] == ','))
+        {
+            return REGISTER; /* Return register addressing type */
+        }
+        else
+        {
+            handleError("Invalid register value", lineNum, operand);
+            return INVALID;
+        }
     }
     /* If none of the above, assume direct addressing */
     return DIRECT; /* Return direct addressing type */
