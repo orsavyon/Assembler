@@ -627,7 +627,10 @@ void processExternDirective(char *line)
     char *token;                     /* Token for parsing symbols from the directive */
     strcpy(buffer, line);            /* Copy the line to the buffer */
     token = strtok(buffer + 7, ","); /* Begin tokenizing after the directive keyword */
-
+    if (token == NULL)
+    {
+        handleError("Missing symbol in .extern directive", lineNum, line);
+    }
     /* Iterate through tokens representing symbols */
     while (token != NULL)
     {
@@ -662,8 +665,17 @@ void processExternDirective(char *line)
  */
 void processEntryDirective(char *line)
 {
+    char buffer[MAX_LINE_LENGTH]; /* Buffer to store the line */
+    char *token;
+    strcpy(buffer, line); /* Copy the line to the buffer */
+    trimLine(buffer);     /* Trim whitespace around the line */
+    token = strtok(buffer + 7, ", \t");
+
     /* Begin tokenizing after the directive keyword */
-    char *token = strtok(line + 7, ",");
+    if (token == NULL) /* Check if the token is missing */
+    {
+        handleError("Missing symbol in .entry directive", lineNum, line);
+    }
 
     /* Iterate through tokens representing symbols */
     while (token != NULL)
@@ -1070,7 +1082,6 @@ int decodeOperands(char *operands[])
                 {
                     strncpy(index, start + 1, length);
                     index[length] = '\0';
-
                     if (isNumeric(index))
                     {
                         value = atoi(index);
@@ -1083,14 +1094,7 @@ int decodeOperands(char *operands[])
                         memoryLines[IC].value = value;
                         IC++;
                     }
-                    else if (lookupSymbol(index) == NULL)
-                    {
-                        memory[IC] = -1;
-                        memoryLines[IC].type = INDEX_ADDRESSING;
-                        memoryLines[IC].value = -1;
-                        IC++;
-                    }
-                    else
+                    else if (lookupSymbol(index) != NULL)
                     {
                         value = lookupSymbol(index)->value;
                         memset(&word, 0, sizeof(word));
@@ -1102,6 +1106,10 @@ int decodeOperands(char *operands[])
                         memoryLines[IC].type = INDEX_ADDRESSING_VALUE;
                         memoryLines[IC].value = value;
                         IC++;
+                    }
+                    else
+                    {
+                        handleError("Invalid index value", lineNum, index);
                     }
                 }
             }
